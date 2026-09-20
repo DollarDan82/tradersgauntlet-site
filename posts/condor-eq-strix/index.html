@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Would a short-dated iron condor pass a Strix 50K evaluation? I ran the numbers — The Tested Desk</title>
+<meta name="description" content="Desk verdict REJECT. Headline pass probability 34.0% at side fill; 76.5% at mid fill.">
+<meta property="og:title" content="Would a short-dated iron condor pass a Strix 50K evaluation? I ran the numbers">
+<meta property="og:description" content="Desk verdict REJECT. Headline pass probability 34.0% at side fill; 76.5% at mid fill.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://tradersgauntlet.com/posts/condor-eq-strix/">
+<meta property="og:image" content="https://tradersgauntlet.com/static/charts/condor-eq-strix-hero.png">
+<link rel="canonical" href="https://tradersgauntlet.com/posts/condor-eq-strix/">
+<link rel="alternate" type="application/rss+xml" title="The Tested Desk" href="../../feed.xml">
+<style>
+/* Light is the default. Dark is an explicit choice, not a system guess. */
+:root{
+  --paper:#fbfaf7; --ink:#1b1b19; --mut:#6d6d65; --line:#e5e2da; --card:#f3f1ea;
+  --accent:#1a5490;
+  --v-pass-fg:#14603c; --v-pass-bg:#e4f1e9; --v-pass-bd:#bfdccb;
+  --v-reject-fg:#9c2f24; --v-reject-bg:#fbe9e6; --v-reject-bd:#eec7c0;
+  --v-inc-fg:#8a5c0e; --v-inc-bg:#fbf1dc; --v-inc-bd:#ecd9ab;
+  /* the equity line is ink, not the accent: the accent stays reserved for links and
+     the verdict. The floor and target borrow the verdict's own reject/pass hues,
+     because the floor is what rejects you and the target is what passes you. */
+  --c-eq:var(--ink); --c-floor:#9c2f24; --c-target:#14603c; --c-ax:#cfcbc1;
+  --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --paper:#16161a; --ink:#e7e5e0; --mut:#9a978f; --line:#2d2d33; --card:#1e1e23;
+  --accent:#78b0e0;
+  --v-pass-fg:#7fd0a5; --v-pass-bg:#16301f; --v-pass-bd:#2a5a3c;
+  --v-reject-fg:#f0968a; --v-reject-bg:#331a17; --v-reject-bd:#5e2f28;
+  --v-inc-fg:#e8bf72; --v-inc-bg:#2e2412; --v-inc-bd:#5c4720;
+  --c-floor:#f0968a; --c-target:#7fd0a5; --c-ax:#3a3a42;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);margin:0;
+  font:18.5px/1.6 var(--serif);font-synthesis-weight:none}
+.wrap{max-width:68ch;margin:0 auto;padding:0 20px}
+
+/* ---- header ---- */
+header.site{padding:1.5rem 0 0}
+header.site .row{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
+header.site a.brand{color:var(--ink);text-decoration:none;font:600 1.12rem/1.2 var(--sans);
+  letter-spacing:-.015em}
+header.site .tag{color:var(--mut);font:400 .84rem/1.45 var(--sans);margin-top:.25rem}
+nav{margin-top:.9rem;font:500 .8rem/1 var(--sans);letter-spacing:.01em}
+nav a{color:var(--mut);text-decoration:none;margin-right:1.15rem}
+nav a:hover{color:var(--accent)}
+.rule{border:0;border-top:1px solid var(--line);margin:.85rem 0 0}
+.counter{font:500 .74rem/1 var(--sans);color:var(--mut);letter-spacing:.06em;
+  text-transform:uppercase;padding:.6rem 0 0}
+.counter b{color:var(--ink);font-weight:600}
+button.theme{background:none;border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:.3rem .7rem;font:500 .72rem/1 var(--sans);cursor:pointer;
+  letter-spacing:.04em;white-space:nowrap}
+button.theme:hover{color:var(--ink);border-color:var(--mut)}
+
+/* ---- type ---- */
+main{padding-top:2.2rem}
+h1{font:600 2.05rem/1.2 var(--serif);letter-spacing:-.02em;margin:0 0 .75rem}
+h2{font:600 1.36rem/1.3 var(--serif);letter-spacing:-.01em;margin:3rem 0 .75rem}
+h3{font:600 .76rem/1.3 var(--sans);text-transform:uppercase;letter-spacing:.085em;
+  color:var(--mut);margin:2.1rem 0 .6rem}
+p{margin:0 0 1.1rem}
+a{color:var(--accent);text-underline-offset:2px}
+ul{padding-left:1.15rem}
+li{margin:.4rem 0}
+code{background:var(--card);padding:.09em .34em;border-radius:3px;font:.84em var(--mono)}
+
+/* ---- verdict pill: the headline fact ---- */
+.verdict{display:inline-block;font:600 .74rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.42rem .68rem;border-radius:999px;border:1px solid}
+.v-reject{color:var(--v-reject-fg);background:var(--v-reject-bg);border-color:var(--v-reject-bd)}
+.v-pass{color:var(--v-pass-fg);background:var(--v-pass-bg);border-color:var(--v-pass-bd)}
+.v-inconclusive{color:var(--v-inc-fg);background:var(--v-inc-bg);border-color:var(--v-inc-bd)}
+
+/* ---- title block ---- */
+.titleblock{margin-bottom:.2rem}
+.titleblock h1{margin-top:.85rem}
+
+/* ---- metadata ---- */
+.meta{font:400 .8rem/1.5 var(--sans);color:var(--mut);margin:.85rem 0 0}
+.meta a{color:var(--mut);text-decoration:none;border-bottom:1px dotted var(--line);
+  font-family:var(--mono);font-size:.94em}
+.meta a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.meta .sep{opacity:.5;padding:0 .45rem}
+
+/* ---- disclosure callout ---- */
+.callout{border:1px solid var(--line);border-left:3px solid var(--mut);
+  background:var(--card);border-radius:4px;padding:1rem 1.15rem .35rem;margin:1.6rem 0}
+.callout-tag{font:600 .66rem/1 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--mut);margin-bottom:.55rem}
+.callout p{font-size:.94rem;line-height:1.55;margin:0 0 .65rem}
+
+/* ---- key-number tiles ---- */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:1.6rem 0 2.2rem}
+.tile{background:var(--paper);padding:.95rem 1rem}
+.tl{font:500 .66rem/1.3 var(--sans);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--mut)}
+.tv{font:600 1.5rem/1.2 var(--sans);letter-spacing:-.02em;margin:.4rem 0 .25rem}
+.ts{font:400 .74rem/1.4 var(--sans);color:var(--mut)}
+@media (max-width:640px){.tiles{grid-template-columns:1fr}}
+
+/* ---- inline chart ---- */
+figure.chart{margin:1.6rem 0 2rem}
+figure.chart svg{width:100%;height:auto;display:block}
+figure.chart figcaption{font:400 .76rem/1.45 var(--sans);color:var(--mut);margin-top:.5rem}
+.chart .ax{stroke:var(--c-ax);stroke-width:1}
+.chart .axl{fill:var(--mut);font:11px var(--sans)}
+.chart .lbl{font:11px var(--sans)}
+.chart .equity{fill:none;stroke:var(--c-eq);stroke-width:2}
+.chart .floor{fill:none;stroke:var(--c-floor);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .target{fill:none;stroke:var(--c-target);stroke-width:1.5;stroke-dasharray:2 4}
+.chart .target-l{fill:var(--c-target)}
+.chart .floor-l{fill:var(--c-floor)}
+.chart .mark{fill:var(--c-floor);stroke:var(--paper);stroke-width:2}
+.chart .mark-l{fill:var(--c-floor);font-weight:600}
+
+/* ---- quotes ---- */
+blockquote{border-left:2px solid var(--line);margin:1.5rem 0;padding:.1rem 0 .1rem 1.1rem;
+  color:var(--mut);font-size:.96rem}
+blockquote h3{margin-top:.3rem}
+
+/* ---- tables: the container owns the overflow, not the table ---- */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:1.3rem 0}
+.tw table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0;
+  font:.8rem/1.45 var(--sans)}
+.tw th,.tw td{border-bottom:1px solid var(--line);padding:.46rem .6rem;text-align:left;
+  white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.tw th{color:var(--mut);font-weight:600;font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.05em}
+.tw td code,.tw th code{white-space:pre-wrap;word-break:break-word;display:inline-block;
+  max-width:100%}
+.t-rules th:nth-child(1),.t-rules td:nth-child(1){width:22%}
+.t-rules th:nth-child(2),.t-rules td:nth-child(2){width:28%}
+.t-rules th:nth-child(3),.t-rules td:nth-child(3){width:50%}
+.t-names th:nth-child(1),.t-names td:nth-child(1){width:26%}
+.t-grid th:nth-child(1),.t-grid td:nth-child(1){width:34%}
+.t-res th:nth-child(1),.t-res td:nth-child(1){width:18%}
+.tw td.a-right,.tw th.a-right{text-align:right}
+.tw td.a-center,.tw th.a-center{text-align:center}
+@media (max-width:640px){
+  .t-rules table,.t-rules thead,.t-rules tbody,.t-rules tr,.t-rules th,.t-rules td{
+    display:block;width:auto}
+  .t-rules thead{display:none}
+  .t-rules th:nth-child(1),.t-rules td:nth-child(1),
+  .t-rules th:nth-child(2),.t-rules td:nth-child(2),
+  .t-rules th:nth-child(3),.t-rules td:nth-child(3){width:auto}
+  .t-rules tr{border-bottom:1px solid var(--line);padding:.75rem 0}
+  .t-rules td{border:0;padding:.18rem 0}
+  .t-rules td::before{content:attr(data-label);display:block;font:500 .64rem/1.3 var(--sans);
+    text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:.12rem}
+  .t-rules td:empty{display:none}
+}
+
+img{max-width:100%;height:auto;display:block;margin:1.5rem auto}
+
+/* a 2.05rem serif headline runs five lines on a phone; tighten it there */
+@media (max-width:640px){
+  body{font-size:17.5px}
+  h1{font-size:1.62rem;line-height:1.22}
+  h2{font-size:1.24rem;margin-top:2.4rem}
+  .tv{font-size:1.35rem}
+}
+
+/* ---- post list ---- */
+.postlist{list-style:none;padding:0;margin:1.6rem 0 0}
+.postlist li{border-top:1px solid var(--line);padding:1.25rem 0}
+.postlist a{text-decoration:none;font:600 1.12rem/1.35 var(--serif);color:var(--ink)}
+.postlist a:hover{color:var(--accent)}
+.postlist .d{color:var(--mut);font:400 .78rem/1.5 var(--sans);margin-top:.35rem}
+.ptag{display:inline-block;font:600 .62rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.3rem .5rem;border-radius:3px;border:1px solid var(--line);
+  color:var(--mut);background:var(--card);margin-bottom:.5rem}
+.pt-death-report{color:var(--v-reject-fg);background:var(--v-reject-bg);
+  border-color:var(--v-reject-bd)}
+
+/* ---- footer ---- */
+footer.site{border-top:1px solid var(--line);margin-top:4rem;padding:1.4rem 0 3.5rem;
+  color:var(--mut);font:400 .78rem/1.6 var(--sans)}
+footer.site a{color:var(--accent);text-decoration:none}
+footer.site a:hover{text-decoration:underline}
+footer.site .fr{margin:0 0 .4rem}
+footer.site code{font-size:.92em}
+</style>
+<script data-goatcounter="https://plutosio.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+/* Light by default. The toggle is the only thing that turns it dark, and the choice
+   is remembered per browser. Storage can throw in a private window, so it is guarded
+   and the page renders correctly either way. */
+(function(){try{var t=localStorage.getItem("theme");
+if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();
+</script>
+<header class="site"><div class="wrap">
+  <div class="row">
+    <div>
+      <a class="brand" href="../../index.html">The Tested Desk</a>
+      <div class="tag">Would this strategy have passed a prop-firm evaluation? I run the numbers.</div>
+    </div>
+    <button class="theme" type="button" onclick="toggleTheme()" id="themebtn">Dark</button>
+  </div>
+  <nav>
+    <a href="../../index.html">Posts</a><a href="../../about/index.html">About</a
+    ><a href="../../methodology/index.html">Methodology</a
+    ><a href="../../disclosure/index.html">Disclosure</a>
+  </nav>
+  <hr class="rule">
+  <div class="counter">Eval verdicts: <b>1</b> scored &middot; <b>1</b> rejected &middot; <b>0</b> passed &middot; Death reports: <b>1</b></div>
+</div></header>
+<main class="wrap">
+<div class="titleblock"><span class="verdict v-reject" title="desk verdict REJECT" aria-label="desk verdict REJECT">REJECT</span>
+<h1>Would a short-dated iron condor pass a Strix 50K evaluation? I ran the numbers</h1>
+<div class="meta">2026-09-19<span class="sep">&middot;</span><a href="../../methodology/index.html#run-id" title="What a run id is">20260909T090913Z-fac906de</a><span class="sep">&middot;</span><a href="../../methodology/index.html#rules-hash" title="What the rules hash is">30c0797672c5ba6e</a></div></div><div class="callout"><div class="callout-tag">Simulated</div><p><strong>Simulated, backtested, and not a funded-account result.</strong> Everything below is a historical study scored against Strix's published rules. No account was traded. Nothing here forecasts what any trader would take home. This site earns a commission if you buy an evaluation through the link at the end.</p></div>
+<div class="tiles"><div class="tile"><div class="tl">Max drawdown vs Strix floor</div><div class="tv">$2,891 / $3,000</div><div class="ts">96% of the floor used</div></div><div class="tile"><div class="tl">Days to target</div><div class="tv">Never</div><div class="ts">target not reached in 474 trades</div></div><div class="tile"><div class="tl">Sample size</div><div class="tv">474</div><div class="ts">of 552 declared; 78 too large to fit at 20% risk</div></div></div>
+<h2>The question</h2>
+<p>A short-dated iron condor on large-cap single names, sold on a strike grid and held to settlement. The desk tested it, rejected it, and logged the rejection. The question this post asks is narrower than "is it any good": <strong>would it have carried a 50K Strix evaluation from start to target before the drawdown floor caught it?</strong></p>
+<p>The answer turns almost entirely on one thing, and it is a thing Strix does not publish.</p>
+<h2>What was tested</h2>
+<p>Seven large-cap names — META, NVDA, AVGO, TSLA, AMZN, AMD, MU — plus SPY and QQQ carried alongside as controls and kept outside the family. One condor per name per session where the strike grid allowed the structure to be built at all; the trade is opened and settled at the close, so there is one realised number per trade and no intraday path.</p>
+<p>All nine symbols appear on Strix's approved ticker list, so the strategy is constructible there on that axis. I checked; the list is enumerated and the rule is flat: "If a symbol is not shown below, it cannot be traded on a Strix account."</p>
+<h2>Data window, sample, and the fill model</h2>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left"></th>
+<th class="a-left"></th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="">Data window</td>
+<td class="a-left" data-label="">2022-03-11 → 2024-12-27</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Trades (7 survivor names)</td>
+<td class="a-left" data-label="">552</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Controls</td>
+<td class="a-left" data-label="">SPY, QQQ (reported alongside, outside the family)</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Commission</td>
+<td class="a-left" data-label="">$2.60 round turn, charged per trade</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Headline fill arm</td>
+<td class="a-left" data-label=""><strong>side</strong> — short at the bid, long at the ask</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Secondary fill arm</td>
+<td class="a-left" data-label="">mid</td>
+</tr>
+</tbody></table></div>
+<p>The two fill arms are the whole story, so it is worth being plain about what they mean. <strong>Mid fill</strong> assumes every leg transacts at the midpoint of its spread. <strong>Side fill</strong> assumes you cross: you sell at the bid and buy at the ask. Real execution sits somewhere between, and where it sits is not a detail — on this strategy it is the difference between a positive expectancy and a negative one.</p>
+<p>Which one applies inside a Strix evaluation? <strong>Strix does not say.</strong> That is not a gap in my research; I read every page on their site that touches execution. What they do say is this:</p>
+<blockquote><p>"Every Strix account trades a simulated market."</p>
+<p>"Simulated fills never face real liquidity, real slippage, or the pressure of real money at stake, and any program built after the fact tends to flatter its own design."</p></blockquote>
+<p>And alongside it, on the same site:</p>
+<blockquote><p>"An execution engine built to mirror live market conditions."</p>
+<p>"Orders execute against live pricing behavior."</p>
+<p>"&lt; 10ms Instant execution. Zero lag."</p></blockquote>
+<p>Those two sets of statements are not reconcilable from the outside, and neither one names a fill rule. So this post does what the desk does with an unknown: it reports the conservative arm as the headline and shows the other one next to it, rather than picking the flattering number and calling it the answer.</p>
+<h2>Strix's rules, as applied</h2>
+<p>Encoded from their published pages. <code>unknown</code> means Strix does not state it. <code>none</code> means Strix explicitly says there is none.</p>
+<div class="tw t-rules">
+<table>
+<thead><tr>
+<th class="a-left">rule</th>
+<th class="a-left">as encoded</th>
+<th class="a-left">Strix's own words</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="rule">drawdown type</td>
+<td class="a-left" data-label="as encoded"><code>trailing_equity_peak</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"The drawdown floor trails upward behind your equity peak."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">floor ratchets up</td>
+<td class="a-left" data-label="as encoded"><code>{"strix": "eod", "express": "intraday"}</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"End of Day versus Intraday only controls how often the floor moves UP behind a new peak. On every plan the floor itself is watched in real time through the session, so a breach is recorded the moment your equity crosses it, intraday, not only at the close."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">breach detected</td>
+<td class="a-left" data-label="as encoded"><code>realtime_both_plans</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"On every plan the floor itself is watched in real time through the session, so a breach is recorded the moment your equity crosses it, intraday, not only at the close."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">floor locks at</td>
+<td class="a-left" data-label="as encoded"><code>realized_profit &gt;= drawdown_limit + 100</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"the floor stops following you at the point where your realized profit has covered the drawdown amount plus $100, and it then fixes permanently"</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">daily loss limit</td>
+<td class="a-left" data-label="as encoded"><code>unknown</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"a daily loss limit applies at every size too, and the one set for yours is published on our Live Program Rules page"</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">min trading days</td>
+<td class="a-left" data-label="as encoded"><code>none</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"No clock ticking, no required day count."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">consistency rule</td>
+<td class="a-left" data-label="as encoded"><code>none</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"No Evaluation Consistency rule, on either plan."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">time limit</td>
+<td class="a-left" data-label="as encoded"><code>none</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"No clock ticking, no required day count."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">max contracts</td>
+<td class="a-left" data-label="as encoded"><code>unknown</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"Buying power caps the size of the positions you may hold"</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">naked short options</td>
+<td class="a-left" data-label="as encoded"><code>not allowed</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"which rules out uncovered (naked) short options"</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">defined-risk spreads</td>
+<td class="a-left" data-label="as encoded"><code>allowed</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"Every position you open must carry a maximum loss you can work out at the moment you open it"</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule">profit split</td>
+<td class="a-left" data-label="as encoded"><code>80 / 20</code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"80% of the profits are yours, and the firm keeps 20%."</td>
+</tr>
+<tr>
+<td class="a-left" data-label="rule"><strong>sim fill model</strong></td>
+<td class="a-left" data-label="as encoded"><code><strong>unknown</strong></code></td>
+<td class="a-left" data-label="Strix&#x27;s own words">"Simulated fills never face real liquidity, real slippage, or the pressure of real money at stake, and any program built after the fact tends to flatter its own design."</td>
+</tr>
+</tbody></table></div>
+<p>Two entries in that table do real work below. The <strong>drawdown type</strong> is a trailing floor that follows your equity peak upward — it is not fixed at your starting balance. And note what the End-of-Day label does and does not mean, because the third-party write-ups get this backwards: it governs how often the floor ratchets <em>up</em>, not when a breach is noticed. Strix is explicit that the floor is watched in real time on every plan.</p>
+<blockquote><h3>Provenance — read this before the numbers</h3>
+<p>The desk run behind this post is flagged <strong>unregistered</strong> and <strong>run on a dirty tree</strong> in its own ledger record. That flag is printed here automatically by the generator whenever it is set on the source row. It is not a disclosure this post chose to make.</p>
+<p><strong>What was missed.</strong> The desk's standing rule required the Stage 1 spec to be frozen in the run ledger <em>before</em> the run. No freeze token was taken. The desk's own note records that this is not repairable after the fact: a token minted later would assert a pre-registration that did not exist.</p>
+<p><strong>The mitigation on record — which is not a substitute.</strong> The signed spec was committed at <code>8b03c6d</code> <em>before</em> the Stage 1 run at <code>37b7082</code>. The order of those two commits is checkable in the repo, so the spec demonstrably predates the results even though the freeze does not exist.</p>
+<p><strong>The dirty path.</strong> The only uncommitted path at run time was a single untracked directory belonging to an unrelated line. It was neither read nor written by this study, and it was deliberately not committed to clear the flag — committing another line's work to tidy up this one's ledger entry would have been the worse error.</p>
+<p><strong>AVGO.</strong> AVGO was flagged in the signed spec <em>before</em> the run and was <strong>not</strong> excluded. The pooled cell below is the declared cell, with AVGO in. No ex-AVGO cell was computed and none is shown here: this generator does not render cells the spec never declared. AVGO's contribution is visible in the per-name table — you can see what it does.</p></blockquote>
+<h2>Results</h2>
+<h3>Would it have passed?</h3>
+<p>Pass probability by tier and position size, block bootstrap, 10,000 resamples, blocks of 20 trades. Position size is expressed as risk per trade as a share of the account's drawdown limit.</p>
+<p><strong>Side fill — the headline arm.</strong></p>
+<div class="tw t-grid">
+<table>
+<thead><tr>
+<th class="a-left">risk per trade</th>
+<th class="a-right">10K</th>
+<th class="a-right">25K</th>
+<th class="a-right">50K</th>
+<th class="a-right">100K</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="risk per trade">5% of drawdown</td>
+<td class="a-right" data-label="10K">—</td>
+<td class="a-right" data-label="25K">0.0%</td>
+<td class="a-right" data-label="50K">0.0%</td>
+<td class="a-right" data-label="100K">0.0%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">10% of drawdown</td>
+<td class="a-right" data-label="10K">0.0%</td>
+<td class="a-right" data-label="25K">0.0%</td>
+<td class="a-right" data-label="50K">0.0%</td>
+<td class="a-right" data-label="100K">0.8%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">20% of drawdown</td>
+<td class="a-right" data-label="10K">0.0%</td>
+<td class="a-right" data-label="25K">23.3%</td>
+<td class="a-right" data-label="50K">34.0%</td>
+<td class="a-right" data-label="100K">26.2%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">33% of drawdown</td>
+<td class="a-right" data-label="10K">39.1%</td>
+<td class="a-right" data-label="25K">39.8%</td>
+<td class="a-right" data-label="50K">30.8%</td>
+<td class="a-right" data-label="100K">32.4%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">20% of drawdown — <em>strict lock reading</em> &dagger;</td>
+<td class="a-right" data-label="10K">0.0%</td>
+<td class="a-right" data-label="25K">23.3%</td>
+<td class="a-right" data-label="50K">34.0%</td>
+<td class="a-right" data-label="100K">26.2%</td>
+</tr>
+</tbody></table></div>
+<p>&dagger; Strix's terms say the drawdown floor "stops following you at the point where your realized profit has covered the drawdown amount plus $100, and it then fixes permanently". That sentence has two readings. Read literally, the floor settles at $100 above the starting balance — the standard prop-firm lock, and the reading used for every other number on this page. Read strictly, it freezes wherever it happens to stand when the threshold is crossed, which is higher and therefore harsher. The footnoted row is that second reading at the same position size.</p>
+<p>The two rows look alike because they are: <strong>the largest difference between the two readings across all four tiers is 0.02 percentage points.</strong> That is the result, not a copy-paste. The readings diverge only if you cross the lock threshold in a single jump large enough to leave the floor above $100, and this strategy crosses it in steps with a median size of about $61 against a drawdown in the thousands. So the floor lands within about $139 of the same place either way, and the outcome almost never turns on it. The ambiguity is real in the text and immaterial in this strategy — which is worth knowing, and is not something you could assert without running it both ways.</p>
+<p><strong>Mid fill — secondary.</strong></p>
+<div class="tw t-grid">
+<table>
+<thead><tr>
+<th class="a-left">risk per trade</th>
+<th class="a-right">10K</th>
+<th class="a-right">25K</th>
+<th class="a-right">50K</th>
+<th class="a-right">100K</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="risk per trade">5% of drawdown</td>
+<td class="a-right" data-label="10K">—</td>
+<td class="a-right" data-label="25K">0.0%</td>
+<td class="a-right" data-label="50K">0.0%</td>
+<td class="a-right" data-label="100K">0.0%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">10% of drawdown</td>
+<td class="a-right" data-label="10K">0.0%</td>
+<td class="a-right" data-label="25K">0.0%</td>
+<td class="a-right" data-label="50K">3.3%</td>
+<td class="a-right" data-label="100K">19.4%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">20% of drawdown</td>
+<td class="a-right" data-label="10K">3.1%</td>
+<td class="a-right" data-label="25K">73.2%</td>
+<td class="a-right" data-label="50K">76.5%</td>
+<td class="a-right" data-label="100K">67.6%</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">33% of drawdown</td>
+<td class="a-right" data-label="10K">78.4%</td>
+<td class="a-right" data-label="25K">63.4%</td>
+<td class="a-right" data-label="50K">54.4%</td>
+<td class="a-right" data-label="100K">56.4%</td>
+</tr>
+</tbody></table></div>
+<p><img src="../../static/charts/condor-eq-strix-passgrid.png" alt="Pass probability by sizing and tier" loading="lazy"></p>
+<p>At the 50K tier, risking 20% of the drawdown limit per trade, the same strategy on the same trades over the same window comes out at <strong>34.0% at side fill</strong> and <strong>76.5% at mid fill</strong>. Nothing changed between those two numbers except the assumption about where inside the spread you transact.</p>
+<h3>Time to resolution, and the trades you cannot take</h3>
+<p>Side fill, 50K tier:</p>
+<div class="tw t-res">
+<table>
+<thead><tr>
+<th class="a-left">risk per trade</th>
+<th class="a-right">trades taken</th>
+<th class="a-right">trades skipped (too big to fit)</th>
+<th class="a-right">P(pass)</th>
+<th class="a-right">P(breach)</th>
+<th class="a-right">P(unresolved)</th>
+<th class="a-right">median trades to resolve</th>
+<th class="a-right">median calendar days</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="risk per trade">5%</td>
+<td class="a-right" data-label="trades taken">164</td>
+<td class="a-right" data-label="trades skipped (too big to fit)">388 (70.3%)</td>
+<td class="a-right" data-label="P(pass)">0.0%</td>
+<td class="a-right" data-label="P(breach)">0.0%</td>
+<td class="a-right" data-label="P(unresolved)">100.0%</td>
+<td class="a-right" data-label="median trades to resolve">—</td>
+<td class="a-right" data-label="median calendar days">—</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">10%</td>
+<td class="a-right" data-label="trades taken">378</td>
+<td class="a-right" data-label="trades skipped (too big to fit)">174 (31.5%)</td>
+<td class="a-right" data-label="P(pass)">0.0%</td>
+<td class="a-right" data-label="P(breach)">0.4%</td>
+<td class="a-right" data-label="P(unresolved)">99.6%</td>
+<td class="a-right" data-label="median trades to resolve">306</td>
+<td class="a-right" data-label="median calendar days">830</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">20%</td>
+<td class="a-right" data-label="trades taken">474</td>
+<td class="a-right" data-label="trades skipped (too big to fit)">78 (14.1%)</td>
+<td class="a-right" data-label="P(pass)">34.0%</td>
+<td class="a-right" data-label="P(breach)">40.0%</td>
+<td class="a-right" data-label="P(unresolved)">26.0%</td>
+<td class="a-right" data-label="median trades to resolve">254</td>
+<td class="a-right" data-label="median calendar days">549</td>
+</tr>
+<tr>
+<td class="a-left" data-label="risk per trade">33%</td>
+<td class="a-right" data-label="trades taken">513</td>
+<td class="a-right" data-label="trades skipped (too big to fit)">39 (7.1%)</td>
+<td class="a-right" data-label="P(pass)">30.8%</td>
+<td class="a-right" data-label="P(breach)">68.9%</td>
+<td class="a-right" data-label="P(unresolved)">0.3%</td>
+<td class="a-right" data-label="median trades to resolve">97</td>
+<td class="a-right" data-label="median calendar days">194</td>
+</tr>
+</tbody></table></div>
+<p>The skipped column is not a rounding note. An iron condor has a fixed maximum loss, and if that loss is larger than your whole per-trade risk budget you cannot put the position on at one contract, let alone size into it. At the smallest sizing the strategy is mostly unavailable rather than unprofitable — a different problem with the same result.</p>
+<h3>The single historical path</h3>
+<p>The bootstrap resamples history. This is history in the order it actually happened, once, at 20% risk.</p>
+<figure class="chart"><svg viewBox="0 0 1000 340" role="img" aria-label="Equity against the Strix drawdown floor, side fill, 20% risk"><line class="ax" x1="74" y1="33.3" x2="982" y2="33.3"/><text class="axl" x="66" y="37.3" text-anchor="end">$6,000</text><line class="ax" x1="74" y1="215.9" x2="982" y2="215.9"/><text class="axl" x="66" y="219.9" text-anchor="end">$0</text><line class="ax" x1="74" y1="306.0" x2="982" y2="306.0"/><text class="axl" x="66" y="310.0" text-anchor="end">$-2,962</text><polyline class="target" points="74.0,33.3 982.0,33.3"/><text class="lbl target-l" x="982" y="26.3" text-anchor="end">profit target</text><polyline class="floor" points="74.0,306.0 75.9,305.9 77.8,305.5 79.8,305.5 81.7,305.4 83.6,302.5 85.5,300.7 87.4,299.9 89.4,297.2 91.3,297.2 93.2,297.2 95.1,297.2 97.0,296.6 99.0,293.9 100.9,293.9 102.8,293.9 104.7,293.9 106.6,293.9 108.6,293.9 110.5,293.9 112.4,293.9 114.3,293.9 116.2,293.9 118.2,293.9 120.1,293.9 122.0,293.9 123.9,293.9 125.8,293.9 127.8,293.9 129.7,293.9 131.6,293.9 133.5,293.9 135.4,293.9 137.3,293.9 139.3,293.9 141.2,293.9 143.1,293.9 145.0,293.9 146.9,293.9 148.9,293.9 150.8,293.9 152.7,293.9 154.6,293.9 156.5,293.9 158.5,293.9 160.4,293.9 162.3,293.9 164.2,293.9 166.1,293.9 168.1,293.9 170.0,293.9 171.9,293.9 173.8,293.9 175.7,293.9 177.7,293.9 179.6,293.9 181.5,293.9 183.4,293.9 185.3,293.9 187.3,293.9 189.2,293.9 191.1,293.9 193.0,293.9 194.9,293.9 196.9,293.9 198.8,292.0 200.7,290.7 202.6,288.3 204.5,286.6 206.5,284.9 208.4,283.2 210.3,283.2 212.2,283.2 214.1,283.2 216.1,283.2 218.0,283.2 219.9,283.2 221.8,283.2 223.7,283.2 225.7,283.2 227.6,283.2 229.5,283.2 231.4,283.2 233.3,283.2 235.3,283.2 237.2,283.2 239.1,283.2 241.0,283.2 242.9,283.2 244.8,283.2 246.8,283.2 248.7,283.2 250.6,283.2 252.5,283.2 254.4,283.2 256.4,283.2 258.3,283.2 260.2,282.8 262.1,282.4 264.0,282.4 266.0,282.4 267.9,282.3 269.8,282.3 271.7,282.3 273.6,282.3 275.6,282.3 277.5,279.8 279.4,278.7 281.3,277.0 283.2,275.8 285.2,273.2 287.1,272.2 289.0,272.2 290.9,272.2 292.8,272.2 294.8,272.2 296.7,272.2 298.6,272.2 300.5,272.2 302.4,272.2 304.4,272.2 306.3,272.2 308.2,272.2 310.1,272.2 312.0,272.2 314.0,272.2 315.9,272.2 317.8,272.2 319.7,272.2 321.6,272.2 323.6,272.2 325.5,272.2 327.4,272.2 329.3,272.2 331.2,272.2 333.2,272.2 335.1,272.2 337.0,272.2 338.9,272.2 340.8,272.2 342.8,272.2 344.7,272.2 346.6,272.2 348.5,272.2 350.4,272.2 352.4,272.2 354.3,272.2 356.2,272.2 358.1,272.2 360.0,272.2 361.9,272.2 363.9,272.2 365.8,272.2 367.7,272.2 369.6,272.2 371.5,272.2 373.5,272.2 375.4,272.2 377.3,272.2 379.2,272.2 381.1,272.2 383.1,272.2 385.0,272.2 386.9,272.2 388.8,272.2 390.7,272.2 392.7,272.2 394.6,272.2 396.5,272.2 398.4,272.2 400.3,272.2 402.3,272.2 404.2,272.2 406.1,272.2 408.0,272.2 409.9,272.2 411.9,272.2 413.8,272.2 415.7,272.2 417.6,272.2 419.5,272.2 421.5,272.2 423.4,272.2 425.3,272.2 427.2,272.2 429.1,272.2 431.1,272.2 433.0,272.2 434.9,272.2 436.8,272.2 438.7,272.2 440.7,272.2 442.6,272.2 444.5,272.2 446.4,272.2 448.3,272.2 450.3,272.2 452.2,272.2 454.1,272.1 456.0,269.5 457.9,269.5 459.9,269.5 461.8,269.5 463.7,269.5 465.6,269.5 467.5,269.5 469.5,269.5 471.4,269.5 473.3,269.5 475.2,269.5 477.1,269.5 479.0,269.5 481.0,269.5 482.9,269.5 484.8,269.5 486.7,269.5 488.6,269.5 490.6,269.5 492.5,269.5 494.4,269.5 496.3,269.5 498.2,269.5 500.2,269.5 502.1,269.5 504.0,269.5 505.9,269.5 507.8,269.5 509.8,269.5 511.7,269.5 513.6,269.5 515.5,269.5 517.4,269.5 519.4,269.5 521.3,269.5 523.2,269.5 525.1,269.5 527.0,269.5 529.0,269.5 530.9,269.5 532.8,269.5 534.7,269.5 536.6,269.5 538.6,269.5 540.5,269.5 542.4,269.5 544.3,269.5 546.2,269.5 548.2,269.5 550.1,269.5 552.0,269.5 553.9,269.5 555.8,269.5 557.8,269.5 559.7,269.5 561.6,269.5 563.5,269.5 565.4,269.5 567.4,269.5 569.3,269.5 571.2,269.5 573.1,269.5 575.0,269.5 577.0,269.5 578.9,269.5 580.8,269.5 582.7,269.5 584.6,269.5 586.5,269.5 588.5,269.5 590.4,269.5 592.3,269.5 594.2,269.5 596.1,269.5 598.1,269.5 600.0,269.5 601.9,269.5 603.8,269.5 605.7,269.5 607.7,269.5 609.6,269.5 611.5,269.5 613.4,269.5 615.3,269.5 617.3,269.5 619.2,269.5 621.1,269.5 623.0,269.5 624.9,269.5 626.9,269.5 628.8,269.5 630.7,269.5 632.6,269.5 634.5,269.5 636.5,269.5 638.4,269.5 640.3,269.5 642.2,269.5 644.1,269.5 646.1,269.5 648.0,269.5 649.9,269.5 651.8,269.5 653.7,269.5 655.7,269.5 657.6,269.5 659.5,269.5 661.4,269.5 663.3,269.5 665.3,269.5 667.2,269.5 669.1,269.5 671.0,269.5 672.9,269.5 674.9,269.5 676.8,269.5 678.7,269.5 680.6,269.5 682.5,268.5 684.5,266.8 686.4,265.8 688.3,263.7 690.2,258.9 692.1,258.9 694.1,258.9 696.0,258.9 697.9,258.9 699.8,258.9 701.7,258.9 703.6,254.5 705.6,251.8 707.5,249.5 709.4,247.0 711.3,247.0 713.2,247.0 715.2,244.5 717.1,244.5 719.0,244.5 720.9,244.5 722.8,244.5 724.8,244.5 726.7,244.5 728.6,244.5 730.5,244.5 732.4,243.2 734.4,241.2 736.3,239.5 738.2,238.9 740.1,236.6 742.0,236.6 744.0,236.6 745.9,236.6 747.8,235.7 749.7,234.4 751.6,232.3 753.6,230.4 755.5,230.4 757.4,230.4 759.3,230.4 761.2,230.4 763.2,229.8 765.1,228.0 767.0,228.0 768.9,226.9 770.8,225.9 772.8,223.6 774.7,222.5 776.6,220.9 778.5,219.5 780.4,217.4 782.4,215.8 784.3,215.4 786.2,213.4 788.1,212.8 790.0,212.8 792.0,212.8 793.9,212.8 795.8,212.8 797.7,212.8 799.6,212.8 801.6,212.8 803.5,212.8 805.4,212.8 807.3,212.8 809.2,212.8 811.2,212.8 813.1,212.8 815.0,212.8 816.9,212.8 818.8,212.8 820.7,212.8 822.7,212.8 824.6,212.8 826.5,212.8 828.4,212.8 830.3,212.8 832.3,212.8 834.2,212.8 836.1,212.8 838.0,212.8 839.9,212.8 841.9,212.8 843.8,212.8 845.7,212.8 847.6,212.8 849.5,212.8 851.5,212.8 853.4,212.8 855.3,212.8 857.2,212.8 859.1,212.8 861.1,212.8 863.0,212.8 864.9,212.8 866.8,212.8 868.7,212.8 870.7,212.8 872.6,212.8 874.5,212.8 876.4,212.8 878.3,212.8 880.3,212.8 882.2,212.8 884.1,212.8 886.0,212.8 887.9,212.8 889.9,212.8 891.8,212.8 893.7,212.8 895.6,212.8 897.5,212.8 899.5,212.8 901.4,212.8 903.3,212.8 905.2,212.8 907.1,212.8 909.1,212.8 911.0,212.8 912.9,212.8 914.8,212.8 916.7,212.8 918.7,212.8 920.6,212.8 922.5,212.8 924.4,212.8 926.3,212.8 928.2,212.8 930.2,212.8 932.1,212.8 934.0,212.8 935.9,212.8 937.8,212.8 939.8,212.8 941.7,212.8 943.6,212.8 945.5,212.8 947.4,212.8 949.4,212.8 951.3,212.8 953.2,212.8 955.1,212.8 957.0,212.8 959.0,212.8 960.9,212.8 962.8,212.8 964.7,212.8 966.6,212.8 968.6,212.8 970.5,212.8 972.4,212.8 974.3,212.8 976.2,212.8 978.2,212.8 980.1,212.8 982.0,212.8"/><text class="lbl floor-l" x="982" y="228.8" text-anchor="end">drawdown floor</text><polyline class="equity" points="74.0,214.7 75.9,214.6 77.8,214.2 79.8,216.7 81.7,214.2 83.6,211.2 85.5,209.4 87.4,208.6 89.4,205.9 91.3,206.3 93.2,208.3 95.1,206.3 97.0,205.3 99.0,202.6 100.9,209.3 102.8,216.3 104.7,221.9 106.6,221.1 108.6,217.4 110.5,215.7 112.4,217.6 114.3,216.3 116.2,220.1 118.2,218.3 120.1,217.7 122.0,216.5 123.9,214.7 125.8,212.6 127.8,211.0 129.7,213.9 131.6,228.4 133.5,232.8 135.4,233.3 137.3,232.8 139.3,230.8 141.2,231.2 143.1,229.9 145.0,228.2 146.9,226.1 148.9,223.9 150.8,223.0 152.7,221.3 154.6,219.3 156.5,217.0 158.5,216.3 160.4,223.9 162.3,224.1 164.2,229.2 166.1,227.6 168.1,225.9 170.0,221.8 171.9,219.6 173.8,218.6 175.7,216.7 177.7,215.8 179.6,213.2 181.5,211.6 183.4,210.4 185.3,217.8 187.3,216.8 189.2,214.5 191.1,210.1 193.0,208.0 194.9,207.5 196.9,205.7 198.8,200.7 200.7,199.4 202.6,197.0 204.5,195.3 206.5,193.6 208.4,191.9 210.3,192.5 212.2,206.7 214.1,205.3 216.1,203.4 218.0,202.1 219.9,199.1 221.8,198.4 223.7,196.5 225.7,194.6 227.6,193.3 229.5,199.2 231.4,207.4 233.3,205.7 235.3,204.6 237.2,202.6 239.1,200.6 241.0,199.6 242.9,196.6 244.8,194.6 246.8,193.3 248.7,192.4 250.6,200.5 252.5,198.8 254.4,196.0 256.4,194.2 258.3,193.0 260.2,191.6 262.1,191.2 264.0,191.1 266.0,193.6 267.9,191.0 269.8,196.9 271.7,193.6 273.6,192.7 275.6,191.2 277.5,188.6 279.4,187.4 281.3,185.7 283.2,184.6 285.2,181.9 287.1,180.9 289.0,183.8 290.9,200.5 292.8,207.0 294.8,219.3 296.7,235.7 298.6,234.2 300.5,232.3 302.4,229.6 304.4,228.3 306.3,226.8 308.2,224.9 310.1,225.8 312.0,224.6 314.0,221.8 315.9,219.4 317.8,218.4 319.7,223.5 321.6,222.5 323.6,228.4 325.5,224.3 327.4,224.2 329.3,222.6 331.2,220.6 333.2,217.1 335.1,216.1 337.0,215.5 338.9,213.7 340.8,212.9 342.8,215.0 344.7,217.7 346.6,220.5 348.5,226.3 350.4,235.2 352.4,231.7 354.3,230.2 356.2,228.6 358.1,227.6 360.0,225.0 361.9,228.6 363.9,226.9 365.8,224.7 367.7,223.2 369.6,221.5 371.5,222.3 373.5,221.4 375.4,219.4 377.3,227.5 379.2,226.0 381.1,224.5 383.1,222.8 385.0,220.7 386.9,218.8 388.8,227.0 390.7,225.2 392.7,223.6 394.6,222.1 396.5,220.9 398.4,219.8 400.3,217.4 402.3,216.4 404.2,214.9 406.1,213.1 408.0,211.9 409.9,207.0 411.9,207.0 413.8,203.3 415.7,202.3 417.6,199.2 419.5,197.8 421.5,195.0 423.4,201.7 425.3,200.7 427.2,197.6 429.1,196.8 431.1,196.0 433.0,194.1 434.9,191.6 436.8,189.2 438.7,191.2 440.7,194.0 442.6,190.7 444.5,188.5 446.4,186.3 448.3,184.5 450.3,183.6 452.2,182.7 454.1,180.8 456.0,178.2 457.9,187.0 459.9,184.6 461.8,183.2 463.7,181.3 465.6,179.2 467.5,191.4 469.5,208.9 471.4,206.3 473.3,214.6 475.2,213.5 477.1,210.0 479.0,216.4 481.0,220.8 482.9,221.6 484.8,222.4 486.7,224.5 488.6,238.6 490.6,256.8 492.5,254.5 494.4,258.3 496.3,256.9 498.2,256.6 500.2,255.4 502.1,253.3 504.0,252.6 505.9,250.8 507.8,250.2 509.8,248.1 511.7,247.2 513.6,244.8 515.5,243.2 517.4,245.2 519.4,256.6 521.3,265.5 523.2,264.2 525.1,266.1 527.0,264.3 529.0,258.1 530.9,256.8 532.8,255.3 534.7,253.5 536.6,252.4 538.6,255.3 540.5,253.9 542.4,252.3 544.3,250.6 546.2,247.1 548.2,248.3 550.1,247.4 552.0,252.1 553.9,252.7 555.8,251.7 557.8,249.2 559.7,247.7 561.6,246.0 563.5,242.3 565.4,241.1 567.4,239.3 569.3,238.5 571.2,237.9 573.1,236.2 575.0,233.6 577.0,231.7 578.9,228.0 580.8,226.9 582.7,226.4 584.6,225.1 586.5,222.4 588.5,220.4 590.4,219.4 592.3,218.5 594.2,217.1 596.1,214.5 598.1,210.8 600.0,209.8 601.9,207.7 603.8,206.9 605.7,205.1 607.7,203.0 609.6,201.0 611.5,199.3 613.4,205.7 615.3,215.4 617.3,213.5 619.2,212.4 621.1,209.8 623.0,208.2 624.9,206.0 626.9,204.3 628.8,203.2 630.7,200.4 632.6,197.3 634.5,204.1 636.5,201.7 638.4,200.5 640.3,198.8 642.2,196.4 644.1,196.0 646.1,194.3 648.0,192.8 649.9,189.7 651.8,186.7 653.7,199.8 655.7,198.4 657.6,193.3 659.5,191.6 661.4,190.8 663.3,189.2 665.3,190.7 667.2,187.4 669.1,195.3 671.0,193.1 672.9,190.2 674.9,188.3 676.8,186.4 678.7,184.5 680.6,181.4 682.5,177.2 684.5,175.5 686.4,174.5 688.3,172.5 690.2,167.6 692.1,180.6 694.1,179.5 696.0,178.4 697.9,173.8 699.8,169.4 701.7,167.8 703.6,163.2 705.6,160.5 707.5,158.2 709.4,155.7 711.3,156.3 713.2,155.8 715.2,153.2 717.1,163.2 719.0,161.5 720.9,162.6 722.8,161.1 724.8,159.2 726.7,156.6 728.6,153.9 730.5,154.3 732.4,151.9 734.4,149.9 736.3,148.2 738.2,147.6 740.1,145.4 742.0,149.3 744.0,147.8 745.9,146.2 747.8,144.4 749.7,143.1 751.6,141.0 753.6,139.1 755.5,144.0 757.4,142.4 759.3,141.2 761.2,140.1 763.2,138.5 765.1,136.8 767.0,137.9 768.9,135.6 770.8,134.6 772.8,132.3 774.7,131.2 776.6,129.6 778.5,128.2 780.4,126.1 782.4,124.5 784.3,124.1 786.2,122.2 788.1,121.0 790.0,135.4 792.0,137.4 793.9,142.4 795.8,142.4 797.7,140.9 799.6,139.5 801.6,138.0 803.5,135.7 805.4,134.3 807.3,148.5 809.2,155.6 811.2,154.2 813.1,166.7 815.0,164.8 816.9,163.1 818.8,175.9 820.7,178.0 822.7,175.4 824.6,188.6 826.5,186.0 828.4,184.3 830.3,183.5 832.3,182.0 834.2,179.3 836.1,176.3 838.0,173.5 839.9,172.2 841.9,170.6 843.8,172.1 845.7,170.5 847.6,168.8 849.5,167.2 851.5,165.4 853.4,163.5 855.3,163.3 857.2,161.7 859.1,157.1 861.1,155.1 863.0,154.0 864.9,152.5 866.8,151.4 868.7,149.3 870.7,147.4 872.6,146.1 874.5,144.8 876.4,157.3 878.3,158.8 880.3,166.1 882.2,163.8 884.1,162.4 886.0,171.4 887.9,169.5 889.9,168.6 891.8,164.2 893.7,164.1 895.6,163.1 897.5,160.7 899.5,159.0 901.4,154.5 903.3,153.1 905.2,151.4 907.1,150.6 909.1,146.7 911.0,145.8 912.9,143.2 914.8,140.9 916.7,138.5 918.7,136.0 920.6,134.2 922.5,132.6 924.4,139.4 926.3,137.7 928.2,136.4 930.2,134.2 932.1,133.5 934.0,131.4 935.9,129.6 937.8,128.1 939.8,126.5 941.7,125.1 943.6,123.5 945.5,122.3 947.4,120.7 949.4,116.8 951.3,115.9 953.2,113.4 955.1,111.6 957.0,108.8 959.0,105.9 960.9,104.6 962.8,102.2 964.7,101.1 966.6,99.6 968.6,98.2 970.5,101.0 972.4,119.0 974.3,116.4 976.2,112.0 978.2,109.4 980.1,105.5 982.0,103.5"/><circle class="mark" cx="525.1" cy="266.1" r="4.5"/><line class="ax" x1="525.1" y1="272.1" x2="525.1" y2="282.1"/><text class="lbl mark-l" x="535.1" y="292.1" text-anchor="start">closest approach — $109 clear</text></svg><figcaption>Equity against the trailing drawdown floor, side fill, 20% risk. Historical order, one path.</figcaption></figure>
+<figure class="chart"><svg viewBox="0 0 1000 340" role="img" aria-label="Equity against the Strix drawdown floor, mid fill, 20% risk"><line class="ax" x1="74" y1="96.3" x2="982" y2="96.3"/><text class="axl" x="66" y="100.3" text-anchor="end">$6,000</text><line class="ax" x1="74" y1="236.9" x2="982" y2="236.9"/><text class="axl" x="66" y="240.9" text-anchor="end">$0</text><line class="ax" x1="74" y1="306.0" x2="982" y2="306.0"/><text class="axl" x="66" y="310.0" text-anchor="end">$-2,947</text><polyline class="target" points="74.0,96.3 982.0,96.3"/><text class="lbl target-l" x="982" y="89.3" text-anchor="end">profit target</text><polyline class="floor" points="74.0,306.0 75.9,305.1 77.8,304.4 79.8,304.4 81.7,304.1 83.6,301.6 85.5,300.1 87.4,299.1 89.4,296.7 91.3,296.7 93.2,296.7 95.1,296.3 97.0,295.2 99.0,293.1 100.9,293.1 102.8,293.1 104.7,293.1 106.6,293.1 108.6,293.1 110.5,293.1 112.4,293.1 114.3,293.1 116.2,293.1 118.2,293.1 120.1,293.1 122.0,293.1 123.9,293.1 125.8,293.1 127.8,293.1 129.7,293.1 131.6,293.1 133.5,293.1 135.4,293.1 137.3,293.1 139.3,293.1 141.2,293.1 143.1,293.1 145.0,293.1 146.9,293.1 148.9,293.1 150.8,293.1 152.7,293.1 154.6,293.1 156.5,293.1 158.5,293.1 160.4,293.1 162.3,293.1 164.2,293.1 166.1,293.1 168.1,293.1 170.0,293.1 171.9,293.1 173.8,293.1 175.7,293.1 177.7,293.1 179.6,291.1 181.5,289.7 183.4,288.6 185.3,288.6 187.3,288.6 189.2,288.6 191.1,287.4 193.0,285.5 194.9,284.8 196.9,283.3 198.8,279.3 200.7,278.0 202.6,275.9 204.5,274.2 206.5,272.8 208.4,271.2 210.3,271.2 212.2,271.2 214.1,271.2 216.1,271.2 218.0,271.2 219.9,271.2 221.8,271.2 223.7,271.2 225.7,270.8 227.6,269.6 229.5,269.6 231.4,269.6 233.3,269.6 235.3,269.6 237.2,269.6 239.1,269.6 241.0,269.6 242.9,269.6 244.8,269.0 246.8,267.8 248.7,267.1 250.6,267.1 252.5,267.1 254.4,267.1 256.4,267.1 258.3,266.2 260.2,264.9 262.1,264.5 264.0,264.3 266.0,264.3 267.9,263.7 269.8,263.7 271.7,263.7 273.6,263.7 275.6,263.0 277.5,260.8 279.4,259.9 281.3,258.3 283.2,257.0 285.2,254.6 287.1,253.5 289.0,253.5 290.9,253.5 292.8,253.5 294.8,253.5 296.7,253.5 298.6,253.5 300.5,253.5 302.4,253.5 304.4,253.5 306.3,253.5 308.2,253.5 310.1,253.5 312.0,253.5 314.0,253.5 315.9,253.5 317.8,253.5 319.7,253.5 321.6,253.5 323.6,253.5 325.5,253.5 327.4,253.5 329.3,253.5 331.2,253.5 333.2,253.5 335.1,253.5 337.0,253.5 338.9,253.5 340.8,253.5 342.8,253.5 344.7,253.5 346.6,253.5 348.5,253.5 350.4,253.5 352.4,253.5 354.3,253.5 356.2,253.5 358.1,253.5 360.0,253.5 361.9,253.5 363.9,253.5 365.8,253.5 367.7,253.5 369.6,253.5 371.5,253.5 373.5,253.5 375.4,253.5 377.3,253.5 379.2,253.5 381.1,253.5 383.1,253.5 385.0,253.5 386.9,253.5 388.8,253.5 390.7,253.5 392.7,253.5 394.6,253.5 396.5,253.5 398.4,253.5 400.3,253.5 402.3,253.5 404.2,253.5 406.1,253.5 408.0,253.5 409.9,253.5 411.9,253.5 413.8,253.5 415.7,253.5 417.6,253.4 419.5,252.1 421.5,249.5 423.4,249.5 425.3,249.5 427.2,249.5 429.1,249.5 431.1,249.3 433.0,247.5 434.9,245.5 436.8,243.5 438.7,243.5 440.7,243.5 442.6,243.5 444.5,241.9 446.4,240.1 448.3,238.7 450.3,237.6 452.2,236.3 454.1,234.7 456.0,234.6 457.9,234.6 459.9,234.6 461.8,234.6 463.7,234.6 465.6,234.6 467.5,234.6 469.5,234.6 471.4,234.6 473.3,234.6 475.2,234.6 477.1,234.6 479.0,234.6 481.0,234.6 482.9,234.6 484.8,234.6 486.7,234.6 488.6,234.6 490.6,234.6 492.5,234.6 494.4,234.6 496.3,234.6 498.2,234.6 500.2,234.6 502.1,234.6 504.0,234.6 505.9,234.6 507.8,234.6 509.8,234.6 511.7,234.6 513.6,234.6 515.5,234.6 517.4,234.6 519.4,234.6 521.3,234.6 523.2,234.6 525.1,234.6 527.0,234.6 529.0,234.6 530.9,234.6 532.8,234.6 534.7,234.6 536.6,234.6 538.6,234.6 540.5,234.6 542.4,234.6 544.3,234.6 546.2,234.6 548.2,234.6 550.1,234.6 552.0,234.6 553.9,234.6 555.8,234.6 557.8,234.6 559.7,234.6 561.6,234.6 563.5,234.6 565.4,234.6 567.4,234.6 569.3,234.6 571.2,234.6 573.1,234.6 575.0,234.6 577.0,234.6 578.9,234.6 580.8,234.6 582.7,234.6 584.6,234.6 586.5,234.6 588.5,234.6 590.4,234.6 592.3,234.6 594.2,234.6 596.1,234.6 598.1,234.6 600.0,234.6 601.9,234.6 603.8,234.6 605.7,234.6 607.7,234.6 609.6,234.6 611.5,234.6 613.4,234.6 615.3,234.6 617.3,234.6 619.2,234.6 621.1,234.6 623.0,234.6 624.9,234.6 626.9,234.6 628.8,234.6 630.7,234.6 632.6,234.6 634.5,234.6 636.5,234.6 638.4,234.6 640.3,234.6 642.2,234.6 644.1,234.6 646.1,234.6 648.0,234.6 649.9,234.6 651.8,234.6 653.7,234.6 655.7,234.6 657.6,234.6 659.5,234.6 661.4,234.6 663.3,234.6 665.3,234.6 667.2,234.6 669.1,234.6 671.0,234.6 672.9,234.6 674.9,234.6 676.8,234.6 678.7,234.6 680.6,234.6 682.5,234.6 684.5,234.6 686.4,234.6 688.3,234.6 690.2,234.6 692.1,234.6 694.1,234.6 696.0,234.6 697.9,234.6 699.8,234.6 701.7,234.6 703.6,234.6 705.6,234.6 707.5,234.6 709.4,234.6 711.3,234.6 713.2,234.6 715.2,234.6 717.1,234.6 719.0,234.6 720.9,234.6 722.8,234.6 724.8,234.6 726.7,234.6 728.6,234.6 730.5,234.6 732.4,234.6 734.4,234.6 736.3,234.6 738.2,234.6 740.1,234.6 742.0,234.6 744.0,234.6 745.9,234.6 747.8,234.6 749.7,234.6 751.6,234.6 753.6,234.6 755.5,234.6 757.4,234.6 759.3,234.6 761.2,234.6 763.2,234.6 765.1,234.6 767.0,234.6 768.9,234.6 770.8,234.6 772.8,234.6 774.7,234.6 776.6,234.6 778.5,234.6 780.4,234.6 782.4,234.6 784.3,234.6 786.2,234.6 788.1,234.6 790.0,234.6 792.0,234.6 793.9,234.6 795.8,234.6 797.7,234.6 799.6,234.6 801.6,234.6 803.5,234.6 805.4,234.6 807.3,234.6 809.2,234.6 811.2,234.6 813.1,234.6 815.0,234.6 816.9,234.6 818.8,234.6 820.7,234.6 822.7,234.6 824.6,234.6 826.5,234.6 828.4,234.6 830.3,234.6 832.3,234.6 834.2,234.6 836.1,234.6 838.0,234.6 839.9,234.6 841.9,234.6 843.8,234.6 845.7,234.6 847.6,234.6 849.5,234.6 851.5,234.6 853.4,234.6 855.3,234.6 857.2,234.6 859.1,234.6 861.1,234.6 863.0,234.6 864.9,234.6 866.8,234.6 868.7,234.6 870.7,234.6 872.6,234.6 874.5,234.6 876.4,234.6 878.3,234.6 880.3,234.6 882.2,234.6 884.1,234.6 886.0,234.6 887.9,234.6 889.9,234.6 891.8,234.6 893.7,234.6 895.6,234.6 897.5,234.6 899.5,234.6 901.4,234.6 903.3,234.6 905.2,234.6 907.1,234.6 909.1,234.6 911.0,234.6 912.9,234.6 914.8,234.6 916.7,234.6 918.7,234.6 920.6,234.6 922.5,234.6 924.4,234.6 926.3,234.6 928.2,234.6 930.2,234.6 932.1,234.6 934.0,234.6 935.9,234.6 937.8,234.6 939.8,234.6 941.7,234.6 943.6,234.6 945.5,234.6 947.4,234.6 949.4,234.6 951.3,234.6 953.2,234.6 955.1,234.6 957.0,234.6 959.0,234.6 960.9,234.6 962.8,234.6 964.7,234.6 966.6,234.6 968.6,234.6 970.5,234.6 972.4,234.6 974.3,234.6 976.2,234.6 978.2,234.6 980.1,234.6 982.0,234.6"/><text class="lbl floor-l" x="982" y="250.6" text-anchor="end">drawdown floor</text><polyline class="equity" points="74.0,235.7 75.9,234.8 77.8,234.1 79.8,236.0 81.7,233.8 83.6,231.3 85.5,229.8 87.4,228.8 89.4,226.4 91.3,226.6 93.2,227.7 95.1,226.0 97.0,224.9 99.0,222.8 100.9,227.7 102.8,232.4 104.7,236.6 106.6,235.7 108.6,232.4 110.5,231.0 112.4,232.3 114.3,231.0 116.2,233.8 118.2,232.2 120.1,231.4 122.0,230.5 123.9,228.9 125.8,226.9 127.8,225.6 129.7,227.7 131.6,238.4 133.5,241.8 135.4,242.0 137.3,241.5 139.3,239.8 141.2,238.6 143.1,237.3 145.0,235.9 146.9,234.1 148.9,232.3 150.8,231.5 152.7,229.9 154.6,228.2 156.5,226.2 158.5,225.5 160.4,231.0 162.3,231.1 164.2,234.8 166.1,233.5 168.1,231.9 170.0,228.6 171.9,226.7 173.8,225.6 175.7,224.0 177.7,223.2 179.6,220.8 181.5,219.3 183.4,218.3 185.3,223.7 187.3,222.6 189.2,220.7 191.1,217.1 193.0,215.2 194.9,214.5 196.9,213.0 198.8,209.0 200.7,207.7 202.6,205.6 204.5,203.9 206.5,202.4 208.4,200.8 210.3,201.2 212.2,211.3 214.1,210.1 216.1,208.5 218.0,207.3 219.9,204.6 221.8,203.9 223.7,202.1 225.7,200.5 227.6,199.3 229.5,203.7 231.4,209.8 233.3,208.4 235.3,207.3 237.2,205.7 239.1,203.9 241.0,203.1 242.9,200.4 244.8,198.7 246.8,197.5 248.7,196.8 250.6,202.7 252.5,201.1 254.4,198.7 256.4,196.9 258.3,195.9 260.2,194.6 262.1,194.2 264.0,194.0 266.0,195.5 267.9,193.4 269.8,197.9 271.7,195.0 273.6,194.0 275.6,192.7 277.5,190.5 279.4,189.6 281.3,188.0 283.2,186.7 285.2,184.3 287.1,183.2 289.0,185.1 290.9,197.7 292.8,202.1 294.8,211.2 296.7,223.7 298.6,222.5 300.5,220.8 302.4,218.5 304.4,217.3 306.3,216.0 308.2,214.4 310.1,214.8 312.0,213.6 314.0,211.3 315.9,209.2 317.8,208.2 319.7,212.0 321.6,211.2 323.6,215.4 325.5,211.8 327.4,211.4 329.3,210.1 331.2,208.4 333.2,205.6 335.1,204.7 337.0,204.1 338.9,202.5 340.8,201.6 342.8,203.1 344.7,204.9 346.6,207.0 348.5,211.1 350.4,217.7 352.4,214.7 354.3,213.4 356.2,212.1 358.1,211.1 360.0,208.9 361.9,211.5 363.9,210.1 365.8,208.3 367.7,207.0 369.6,205.7 371.5,206.2 373.5,205.1 375.4,203.5 377.3,209.7 379.2,208.0 381.1,206.4 383.1,205.0 385.0,203.2 386.9,201.5 388.8,207.6 390.7,206.1 392.7,204.7 394.6,203.2 396.5,202.2 398.4,201.2 400.3,199.2 402.3,198.1 404.2,196.6 406.1,195.1 408.0,194.0 409.9,190.1 411.9,190.0 413.8,186.8 415.7,185.8 417.6,183.1 419.5,181.8 421.5,179.2 423.4,184.2 425.3,183.3 427.2,180.6 429.1,179.8 431.1,178.9 433.0,177.2 434.9,175.2 436.8,173.2 438.7,174.3 440.7,176.3 442.6,173.4 444.5,171.6 446.4,169.8 448.3,168.4 450.3,167.3 452.2,166.0 454.1,164.4 456.0,161.9 457.9,168.4 459.9,166.4 461.8,165.2 463.7,163.7 465.6,161.8 467.5,170.1 469.5,183.3 471.4,180.9 473.3,187.2 475.2,186.3 477.1,183.3 479.0,188.1 481.0,191.4 482.9,191.9 484.8,192.3 486.7,193.6 488.6,204.4 490.6,218.2 492.5,216.3 494.4,218.8 496.3,217.1 498.2,216.8 500.2,215.7 502.1,213.8 504.0,212.5 505.9,210.9 507.8,209.8 509.8,207.9 511.7,207.1 513.6,205.2 515.5,203.9 517.4,205.1 519.4,213.8 521.3,219.7 523.2,218.6 525.1,219.9 527.0,218.1 529.0,213.2 530.9,212.1 532.8,210.8 534.7,209.2 536.6,208.0 538.6,210.2 540.5,208.5 542.4,207.2 544.3,205.7 546.2,202.6 548.2,203.1 550.1,202.3 552.0,205.8 553.9,206.1 555.8,204.7 557.8,202.5 559.7,201.3 561.6,199.9 563.5,196.7 565.4,195.7 567.4,194.2 569.3,193.3 571.2,192.5 573.1,191.1 575.0,189.0 577.0,187.4 578.9,184.3 580.8,183.3 582.7,182.9 584.6,181.5 586.5,179.1 588.5,177.4 590.4,176.3 592.3,175.6 594.2,174.4 596.1,172.0 598.1,168.8 600.0,168.0 601.9,166.1 603.8,165.3 605.7,163.8 607.7,162.1 609.6,160.2 611.5,158.6 613.4,163.3 615.3,170.1 617.3,168.5 619.2,167.6 621.1,165.2 623.0,163.9 624.9,162.1 626.9,160.7 628.8,158.8 630.7,156.5 632.6,153.8 634.5,158.7 636.5,156.8 638.4,155.6 640.3,154.2 642.2,152.2 644.1,151.5 646.1,150.2 648.0,148.9 649.9,146.2 651.8,143.5 653.7,153.1 655.7,151.8 657.6,147.8 659.5,146.2 661.4,145.4 663.3,144.1 665.3,145.2 667.2,142.3 669.1,148.0 671.0,146.2 672.9,143.0 674.9,141.5 676.8,140.0 678.7,138.2 680.6,135.5 682.5,132.1 684.5,130.5 686.4,129.1 688.3,127.4 690.2,123.5 692.1,133.4 694.1,132.4 696.0,131.4 697.9,127.7 699.8,124.1 701.7,122.8 703.6,119.1 705.6,116.9 707.5,115.0 709.4,113.0 711.3,113.4 713.2,112.7 715.2,110.6 717.1,118.1 719.0,116.7 720.9,117.5 722.8,116.2 724.8,114.6 726.7,112.6 728.6,110.4 730.5,110.4 732.4,108.5 734.4,106.8 736.3,105.4 738.2,104.5 740.1,102.6 742.0,105.4 744.0,103.8 745.9,102.5 747.8,101.0 749.7,99.8 751.6,97.8 753.6,96.2 755.5,99.9 757.4,98.4 759.3,97.3 761.2,96.3 763.2,94.9 765.1,93.1 767.0,93.8 768.9,91.8 770.8,90.4 772.8,88.5 774.7,87.4 776.6,86.1 778.5,84.9 780.4,82.9 782.4,81.6 784.3,80.0 786.2,78.2 788.1,76.8 790.0,87.7 792.0,89.0 793.9,92.7 795.8,91.9 797.7,90.5 799.6,89.2 801.6,87.5 803.5,85.6 805.4,84.5 807.3,95.2 809.2,100.0 811.2,98.8 813.1,108.3 815.0,106.4 816.9,104.9 818.8,114.6 820.7,116.0 822.7,113.3 824.6,123.2 826.5,121.1 828.4,119.6 830.3,118.5 832.3,117.2 834.2,114.9 836.1,112.3 838.0,109.6 839.9,108.5 841.9,107.1 843.8,108.1 845.7,106.2 847.6,104.6 849.5,103.2 851.5,101.7 853.4,100.0 855.3,99.0 857.2,97.5 859.1,93.4 861.1,91.8 863.0,90.6 864.9,89.0 866.8,88.0 868.7,86.2 870.7,84.4 872.6,83.3 874.5,82.1 876.4,91.6 878.3,92.6 880.3,98.1 882.2,96.2 884.1,94.5 886.0,101.3 887.9,99.6 889.9,98.6 891.8,94.8 893.7,94.7 895.6,93.7 897.5,91.7 899.5,90.1 901.4,86.5 903.3,85.1 905.2,83.5 907.1,82.6 909.1,79.5 911.0,78.6 912.9,76.1 914.8,74.2 916.7,72.1 918.7,69.9 920.6,68.4 922.5,67.0 924.4,72.1 926.3,70.5 928.2,69.4 930.2,67.4 932.1,66.5 934.0,64.6 935.9,63.2 937.8,61.6 939.8,60.1 941.7,58.6 943.6,57.2 945.5,56.0 947.4,54.7 949.4,51.3 951.3,50.3 953.2,48.2 955.1,46.7 957.0,44.0 959.0,41.4 960.9,40.1 962.8,38.1 964.7,37.2 966.6,35.7 968.6,34.1 970.5,36.1 972.4,49.4 974.3,47.0 976.2,43.2 978.2,41.0 980.1,37.6 982.0,36.0"/><circle class="mark" cx="525.1" cy="219.9" r="4.5"/><line class="ax" x1="525.1" y1="225.9" x2="525.1" y2="235.9"/><text class="lbl mark-l" x="535.1" y="245.9" text-anchor="start">closest approach — $626 clear</text></svg><figcaption>Equity against the trailing drawdown floor, mid fill, 20% risk. Historical order, one path.</figcaption></figure>
+<h3>Per name</h3>
+<p>Both fill arms, side first. An absent cell prints —; nothing is imputed and no row is dropped.</p>
+<p><strong>Side fill.</strong></p>
+<div class="tw t-names">
+<table>
+<thead><tr>
+<th class="a-left">name</th>
+<th class="a-right">n</th>
+<th class="a-right">mean $</th>
+<th class="a-right">median $</th>
+<th class="a-right">win rate</th>
+<th class="a-right">profit factor</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="name"><strong>POOLED (7 names)</strong></td>
+<td class="a-right" data-label="n">552</td>
+<td class="a-right" data-label="mean $">-1.15</td>
+<td class="a-right" data-label="median $">16.40</td>
+<td class="a-right" data-label="win rate">78.4%</td>
+<td class="a-right" data-label="profit factor">0.97</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">META</td>
+<td class="a-right" data-label="n">78</td>
+<td class="a-right" data-label="mean $">-4.65</td>
+<td class="a-right" data-label="median $">21.40</td>
+<td class="a-right" data-label="win rate">74.4%</td>
+<td class="a-right" data-label="profit factor">0.85</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">NVDA</td>
+<td class="a-right" data-label="n">118</td>
+<td class="a-right" data-label="mean $">-1.71</td>
+<td class="a-right" data-label="median $">22.90</td>
+<td class="a-right" data-label="win rate">78.8%</td>
+<td class="a-right" data-label="profit factor">0.96</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AVGO</td>
+<td class="a-right" data-label="n">51</td>
+<td class="a-right" data-label="mean $">-74.92</td>
+<td class="a-right" data-label="median $">23.40</td>
+<td class="a-right" data-label="win rate">70.6%</td>
+<td class="a-right" data-label="profit factor">0.38</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">TSLA</td>
+<td class="a-right" data-label="n">108</td>
+<td class="a-right" data-label="mean $">21.79</td>
+<td class="a-right" data-label="median $">30.40</td>
+<td class="a-right" data-label="win rate">82.4%</td>
+<td class="a-right" data-label="profit factor">1.68</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AMZN</td>
+<td class="a-right" data-label="n">65</td>
+<td class="a-right" data-label="mean $">19.09</td>
+<td class="a-right" data-label="median $">10.40</td>
+<td class="a-right" data-label="win rate">73.8%</td>
+<td class="a-right" data-label="profit factor">1.44</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AMD</td>
+<td class="a-right" data-label="n">86</td>
+<td class="a-right" data-label="mean $">1.28</td>
+<td class="a-right" data-label="median $">10.90</td>
+<td class="a-right" data-label="win rate">81.4%</td>
+<td class="a-right" data-label="profit factor">1.10</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">MU</td>
+<td class="a-right" data-label="n">46</td>
+<td class="a-right" data-label="mean $">1.03</td>
+<td class="a-right" data-label="median $">7.40</td>
+<td class="a-right" data-label="win rate">84.8%</td>
+<td class="a-right" data-label="profit factor">1.16</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name"><em>SPY (control)</em></td>
+<td class="a-right" data-label="n">132</td>
+<td class="a-right" data-label="mean $">4.40</td>
+<td class="a-right" data-label="median $">21.40</td>
+<td class="a-right" data-label="win rate">82.6%</td>
+<td class="a-right" data-label="profit factor">1.26</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name"><em>QQQ (control)</em></td>
+<td class="a-right" data-label="n">129</td>
+<td class="a-right" data-label="mean $">2.66</td>
+<td class="a-right" data-label="median $">19.40</td>
+<td class="a-right" data-label="win rate">79.1%</td>
+<td class="a-right" data-label="profit factor">1.17</td>
+</tr>
+</tbody></table></div>
+<p><strong>Mid fill.</strong></p>
+<div class="tw t-names">
+<table>
+<thead><tr>
+<th class="a-left">name</th>
+<th class="a-right">n</th>
+<th class="a-right">mean $</th>
+<th class="a-right">median $</th>
+<th class="a-right">win rate</th>
+<th class="a-right">profit factor</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="name"><strong>POOLED (7 names)</strong></td>
+<td class="a-right" data-label="n">552</td>
+<td class="a-right" data-label="mean $">6.58</td>
+<td class="a-right" data-label="median $">19.40</td>
+<td class="a-right" data-label="win rate">79.0%</td>
+<td class="a-right" data-label="profit factor">1.19</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">META</td>
+<td class="a-right" data-label="n">78</td>
+<td class="a-right" data-label="mean $">-0.07</td>
+<td class="a-right" data-label="median $">23.90</td>
+<td class="a-right" data-label="win rate">74.4%</td>
+<td class="a-right" data-label="profit factor">1.00</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">NVDA</td>
+<td class="a-right" data-label="n">118</td>
+<td class="a-right" data-label="mean $">1.98</td>
+<td class="a-right" data-label="median $">25.90</td>
+<td class="a-right" data-label="win rate">80.5%</td>
+<td class="a-right" data-label="profit factor">1.05</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AVGO</td>
+<td class="a-right" data-label="n">51</td>
+<td class="a-right" data-label="mean $">-40.77</td>
+<td class="a-right" data-label="median $">48.40</td>
+<td class="a-right" data-label="win rate">72.5%</td>
+<td class="a-right" data-label="profit factor">0.63</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">TSLA</td>
+<td class="a-right" data-label="n">108</td>
+<td class="a-right" data-label="mean $">26.23</td>
+<td class="a-right" data-label="median $">33.40</td>
+<td class="a-right" data-label="win rate">82.4%</td>
+<td class="a-right" data-label="profit factor">1.84</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AMZN</td>
+<td class="a-right" data-label="n">65</td>
+<td class="a-right" data-label="mean $">33.14</td>
+<td class="a-right" data-label="median $">12.40</td>
+<td class="a-right" data-label="win rate">73.8%</td>
+<td class="a-right" data-label="profit factor">1.84</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">AMD</td>
+<td class="a-right" data-label="n">86</td>
+<td class="a-right" data-label="mean $">3.67</td>
+<td class="a-right" data-label="median $">13.15</td>
+<td class="a-right" data-label="win rate">81.4%</td>
+<td class="a-right" data-label="profit factor">1.31</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name">MU</td>
+<td class="a-right" data-label="n">46</td>
+<td class="a-right" data-label="mean $">3.88</td>
+<td class="a-right" data-label="median $">10.15</td>
+<td class="a-right" data-label="win rate">84.8%</td>
+<td class="a-right" data-label="profit factor">1.63</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name"><em>SPY (control)</em></td>
+<td class="a-right" data-label="n">132</td>
+<td class="a-right" data-label="mean $">6.45</td>
+<td class="a-right" data-label="median $">23.40</td>
+<td class="a-right" data-label="win rate">82.6%</td>
+<td class="a-right" data-label="profit factor">1.39</td>
+</tr>
+<tr>
+<td class="a-left" data-label="name"><em>QQQ (control)</em></td>
+<td class="a-right" data-label="n">129</td>
+<td class="a-right" data-label="mean $">4.95</td>
+<td class="a-right" data-label="median $">21.40</td>
+<td class="a-right" data-label="win rate">79.1%</td>
+<td class="a-right" data-label="profit factor">1.33</td>
+</tr>
+</tbody></table></div>
+<p>AVGO is the row to look at. It is the reason the pooled cell sits where it does, and it was flagged in the signed spec before the run and deliberately left in. You can see its contribution directly rather than being handed a cleaned-up pooled number.</p>
+<h2>The desk's own verdict on this strategy</h2>
+<p>The desk logged this run before any of the above was written. The card below is the public view of that ledger row: the verdict, the numbers it was reached on, and the flags it carries.</p>
+<h3>Desk verdict card</h3>
+<blockquote><p><strong>○ REJECT</strong> — <em>Failed the pre-registered gate. Recorded, not deleted — a rejected run is evidence.</em></p>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left"></th>
+<th class="a-left"></th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="">Run</td>
+<td class="a-left" data-label=""><code>20260909T090913Z-fac906de</code></td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Logged</td>
+<td class="a-left" data-label="">2026-09-09</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Data window</td>
+<td class="a-left" data-label="">2022-03-11 → 2024-12-27</td>
+</tr>
+</tbody></table></div>
+<p><strong>Headline metrics</strong></p>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left">metric</th>
+<th class="a-right">value</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="metric">trades (pooled)</td>
+<td class="a-right" data-label="value">552</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">profit factor, side fill</td>
+<td class="a-right" data-label="value">0.97</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">95% CI, side fill</td>
+<td class="a-right" data-label="value">[0.68, 1.4]</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">mean $/trade, side fill</td>
+<td class="a-right" data-label="value">-1.15</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">profit factor, mid fill</td>
+<td class="a-right" data-label="value">1.19</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">95% CI, mid fill</td>
+<td class="a-right" data-label="value">[0.86, 1.74]</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">mean $/trade, mid fill</td>
+<td class="a-right" data-label="value">6.58</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">names with PF &gt; 1</td>
+<td class="a-right" data-label="value">4</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">names required to pass</td>
+<td class="a-right" data-label="value">6</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">declared cells</td>
+<td class="a-right" data-label="value">11</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">SPY control PF, side fill</td>
+<td class="a-right" data-label="value">1.26</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">QQQ control PF, side fill</td>
+<td class="a-right" data-label="value">1.17</td>
+</tr>
+</tbody></table></div>
+<p><strong>Flags</strong></p>
+<ul><li><strong>UNREGISTERED</strong> — logged with no prior freeze — not pre-registered</li><li><strong>DIRTY TREE</strong> — not reproducible from its commit</li></ul></blockquote>
+<h2>What this does and does not say</h2>
+<p><strong>It does say</strong> that under Strix's published drawdown rules, on this sample and this window, the pass probability of this strategy is governed by the fill assumption more than by position sizing, tier, or anything the trader controls after entry.</p>
+<p><strong>It does not say</strong> what you would experience in a Strix evaluation, for several reasons that are worth naming rather than burying:</p>
+<ul><li><strong>A daily loss limit exists and is not modelled — this biases every number on the page upward.</strong> Strix's terms state plainly that "a daily loss limit applies at every size too", and then point at a page that does not carry the figure. No number appears anywhere on their site. A daily loss limit is a second, independent way to fail that this simulation cannot see, so it can only reduce the pass probabilities above — never raise them. This is the largest single unstated quantity in the study.</li><li><strong>Breach is under-detected here.</strong> Strix watches the floor in real time. These condors settle at the close and carry no intraday equity path, so a breach is only seen on end-of-trade equity. An intraday excursion through the floor that recovered by the close is invisible to this simulation. <strong>The breach numbers are a lower bound and the pass numbers are an upper bound.</strong> No intraday path was fabricated to paper over this.</li><li><strong>Redemptions are not modelled.</strong> A breach is treated as terminal. Strix allows a breached evaluation to be continued by buying a Redemption, so a determined trader's probability of <em>eventually</em> passing is higher than these numbers — at a cost this study does not price.</li><li><strong>The lock clause has two readings, and it was run both ways.</strong> Their terms say the floor fixes once realised profit covers the drawdown amount plus $100; that can be read as a floor at $100 or as a freeze wherever the floor stands. The literal reading leads here, and the footnoted row under the side-fill grid carries the strict one. The gap between them is under a tenth of a percentage point on this strategy, so unlike the fill model this ambiguity does not change the answer.</li><li><strong>One window, one regime.</strong> 2022-03-11 to 2024-12-27, seven names, 552 trades. The block bootstrap preserves short-run dependence; it does not conjure a second decade.</li><li><strong>The desk rejected this strategy.</strong> The verdict card above is REJECT on the cost floor. This post is not a rehabilitation of it. It is a worked example of how a published rule set interacts with a result that was already recorded as a failure.</li></ul>
+<h2>If you want to check Strix yourself</h2>
+<p>The one question worth asking their support before you buy anything, because it is the question that moved every number on this page:</p>
+<blockquote><p><em>Inside a Strix evaluation, at what price do my option legs fill — the midpoint, or the bid and ask? And is there modelled slippage?</em></p></blockquote>
+<p>Their published answer today is silence, and their own risk language is the most honest thing on the site:</p>
+<blockquote><p>"Simulated fills never face real liquidity, real slippage, or the pressure of real money at stake, and any program built after the fact tends to flatter its own design."</p></blockquote>
+<p><a href="https://tradersgauntlet.com/go/strix">Strix Options — evaluations</a> · discount code <code>SEPTEMBER</code></p>
+<p><em>This site earns a commission if you buy an evaluation through this link.</em></p>
+</main>
+<footer class="site"><div class="wrap">
+  <p class="fr"><a href="../../methodology/index.html">Methodology</a> &middot;
+     <a href="../../disclosure/index.html">Disclosure</a></p>
+  <p class="fr">This site earns a commission if you buy an evaluation through this link. <a href="https://tradersgauntlet.com/go/strix" rel="sponsored nofollow noopener">Strix Options</a> &middot; code <code>SEPTEMBER</code></p>
+  <p class="fr">Run <code>20260909T090913Z-fac906de</code></p>
+</div></footer>
+<script>
+function toggleTheme(){var d=document.documentElement;
+var dark=d.getAttribute("data-theme")==="dark";
+d.setAttribute("data-theme",dark?"light":"dark");
+try{localStorage.setItem("theme",dark?"light":"dark");}catch(e){}
+var b=document.getElementById("themebtn");if(b)b.textContent=dark?"Dark":"Light";}
+(function(){var b=document.getElementById("themebtn");
+if(b&&document.documentElement.getAttribute("data-theme")==="dark")b.textContent="Light";})();
+</script>
+</html>

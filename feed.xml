@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel>
+<title>The Tested Desk</title>
+<link>https://tradersgauntlet.com/</link>
+<description>Backtested strategies scored against published prop-firm evaluation rules, and death reports on lines that never got that far. Generated from a run ledger, not hand-written.</description>
+<language>en</language>
+<lastBuildDate>Sun, 20 Sep 2026 22:25:32 +0000</lastBuildDate>
+<item>
+<title>Would a short-dated iron condor pass a Strix 50K evaluation? I ran the numbers</title>
+<link>https://tradersgauntlet.com/posts/condor-eq-strix/</link>
+<guid isPermaLink='false'>20260909T090913Z-fac906de</guid>
+<description>Desk verdict REJECT. Headline pass probability 34.0% at side fill; 76.5% at mid fill.</description>
+</item>
+<item>
+<title>The doji tells you nothing: a death report</title>
+<link>https://tradersgauntlet.com/posts/doji-death-report/</link>
+<guid isPermaLink='false'>doji-death-report</guid>
+<description>Negative result. Holdout sealed, never opened. A documented failure, published because the failure is the finding.</description>
+</item>
+</channel></rss>

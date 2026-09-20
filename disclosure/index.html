@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disclosure — The Tested Desk</title>
+<meta name="description" content="Backtested strategies scored against published prop-firm evaluation rules, and death reports on lines that never got that far. Generated from a run ledger, not hand-written.">
+<meta property="og:title" content="Disclosure — The Tested Desk">
+<meta property="og:description" content="Backtested strategies scored against published prop-firm evaluation rules, and death reports on lines that never got that far. Generated from a run ledger, not hand-written.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tradersgauntlet.com/disclosure/">
+
+<link rel="canonical" href="https://tradersgauntlet.com/disclosure/">
+<link rel="alternate" type="application/rss+xml" title="The Tested Desk" href="../feed.xml">
+<style>
+/* Light is the default. Dark is an explicit choice, not a system guess. */
+:root{
+  --paper:#fbfaf7; --ink:#1b1b19; --mut:#6d6d65; --line:#e5e2da; --card:#f3f1ea;
+  --accent:#1a5490;
+  --v-pass-fg:#14603c; --v-pass-bg:#e4f1e9; --v-pass-bd:#bfdccb;
+  --v-reject-fg:#9c2f24; --v-reject-bg:#fbe9e6; --v-reject-bd:#eec7c0;
+  --v-inc-fg:#8a5c0e; --v-inc-bg:#fbf1dc; --v-inc-bd:#ecd9ab;
+  /* the equity line is ink, not the accent: the accent stays reserved for links and
+     the verdict. The floor and target borrow the verdict's own reject/pass hues,
+     because the floor is what rejects you and the target is what passes you. */
+  --c-eq:var(--ink); --c-floor:#9c2f24; --c-target:#14603c; --c-ax:#cfcbc1;
+  --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --paper:#16161a; --ink:#e7e5e0; --mut:#9a978f; --line:#2d2d33; --card:#1e1e23;
+  --accent:#78b0e0;
+  --v-pass-fg:#7fd0a5; --v-pass-bg:#16301f; --v-pass-bd:#2a5a3c;
+  --v-reject-fg:#f0968a; --v-reject-bg:#331a17; --v-reject-bd:#5e2f28;
+  --v-inc-fg:#e8bf72; --v-inc-bg:#2e2412; --v-inc-bd:#5c4720;
+  --c-floor:#f0968a; --c-target:#7fd0a5; --c-ax:#3a3a42;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);margin:0;
+  font:18.5px/1.6 var(--serif);font-synthesis-weight:none}
+.wrap{max-width:68ch;margin:0 auto;padding:0 20px}
+
+/* ---- header ---- */
+header.site{padding:1.5rem 0 0}
+header.site .row{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
+header.site a.brand{color:var(--ink);text-decoration:none;font:600 1.12rem/1.2 var(--sans);
+  letter-spacing:-.015em}
+header.site .tag{color:var(--mut);font:400 .84rem/1.45 var(--sans);margin-top:.25rem}
+nav{margin-top:.9rem;font:500 .8rem/1 var(--sans);letter-spacing:.01em}
+nav a{color:var(--mut);text-decoration:none;margin-right:1.15rem}
+nav a:hover{color:var(--accent)}
+.rule{border:0;border-top:1px solid var(--line);margin:.85rem 0 0}
+.counter{font:500 .74rem/1 var(--sans);color:var(--mut);letter-spacing:.06em;
+  text-transform:uppercase;padding:.6rem 0 0}
+.counter b{color:var(--ink);font-weight:600}
+button.theme{background:none;border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:.3rem .7rem;font:500 .72rem/1 var(--sans);cursor:pointer;
+  letter-spacing:.04em;white-space:nowrap}
+button.theme:hover{color:var(--ink);border-color:var(--mut)}
+
+/* ---- type ---- */
+main{padding-top:2.2rem}
+h1{font:600 2.05rem/1.2 var(--serif);letter-spacing:-.02em;margin:0 0 .75rem}
+h2{font:600 1.36rem/1.3 var(--serif);letter-spacing:-.01em;margin:3rem 0 .75rem}
+h3{font:600 .76rem/1.3 var(--sans);text-transform:uppercase;letter-spacing:.085em;
+  color:var(--mut);margin:2.1rem 0 .6rem}
+p{margin:0 0 1.1rem}
+a{color:var(--accent);text-underline-offset:2px}
+ul{padding-left:1.15rem}
+li{margin:.4rem 0}
+code{background:var(--card);padding:.09em .34em;border-radius:3px;font:.84em var(--mono)}
+
+/* ---- verdict pill: the headline fact ---- */
+.verdict{display:inline-block;font:600 .74rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.42rem .68rem;border-radius:999px;border:1px solid}
+.v-reject{color:var(--v-reject-fg);background:var(--v-reject-bg);border-color:var(--v-reject-bd)}
+.v-pass{color:var(--v-pass-fg);background:var(--v-pass-bg);border-color:var(--v-pass-bd)}
+.v-inconclusive{color:var(--v-inc-fg);background:var(--v-inc-bg);border-color:var(--v-inc-bd)}
+
+/* ---- title block ---- */
+.titleblock{margin-bottom:.2rem}
+.titleblock h1{margin-top:.85rem}
+
+/* ---- metadata ---- */
+.meta{font:400 .8rem/1.5 var(--sans);color:var(--mut);margin:.85rem 0 0}
+.meta a{color:var(--mut);text-decoration:none;border-bottom:1px dotted var(--line);
+  font-family:var(--mono);font-size:.94em}
+.meta a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.meta .sep{opacity:.5;padding:0 .45rem}
+
+/* ---- disclosure callout ---- */
+.callout{border:1px solid var(--line);border-left:3px solid var(--mut);
+  background:var(--card);border-radius:4px;padding:1rem 1.15rem .35rem;margin:1.6rem 0}
+.callout-tag{font:600 .66rem/1 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--mut);margin-bottom:.55rem}
+.callout p{font-size:.94rem;line-height:1.55;margin:0 0 .65rem}
+
+/* ---- key-number tiles ---- */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:1.6rem 0 2.2rem}
+.tile{background:var(--paper);padding:.95rem 1rem}
+.tl{font:500 .66rem/1.3 var(--sans);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--mut)}
+.tv{font:600 1.5rem/1.2 var(--sans);letter-spacing:-.02em;margin:.4rem 0 .25rem}
+.ts{font:400 .74rem/1.4 var(--sans);color:var(--mut)}
+@media (max-width:640px){.tiles{grid-template-columns:1fr}}
+
+/* ---- inline chart ---- */
+figure.chart{margin:1.6rem 0 2rem}
+figure.chart svg{width:100%;height:auto;display:block}
+figure.chart figcaption{font:400 .76rem/1.45 var(--sans);color:var(--mut);margin-top:.5rem}
+.chart .ax{stroke:var(--c-ax);stroke-width:1}
+.chart .axl{fill:var(--mut);font:11px var(--sans)}
+.chart .lbl{font:11px var(--sans)}
+.chart .equity{fill:none;stroke:var(--c-eq);stroke-width:2}
+.chart .floor{fill:none;stroke:var(--c-floor);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .target{fill:none;stroke:var(--c-target);stroke-width:1.5;stroke-dasharray:2 4}
+.chart .target-l{fill:var(--c-target)}
+.chart .floor-l{fill:var(--c-floor)}
+.chart .mark{fill:var(--c-floor);stroke:var(--paper);stroke-width:2}
+.chart .mark-l{fill:var(--c-floor);font-weight:600}
+
+/* ---- quotes ---- */
+blockquote{border-left:2px solid var(--line);margin:1.5rem 0;padding:.1rem 0 .1rem 1.1rem;
+  color:var(--mut);font-size:.96rem}
+blockquote h3{margin-top:.3rem}
+
+/* ---- tables: the container owns the overflow, not the table ---- */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:1.3rem 0}
+.tw table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0;
+  font:.8rem/1.45 var(--sans)}
+.tw th,.tw td{border-bottom:1px solid var(--line);padding:.46rem .6rem;text-align:left;
+  white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.tw th{color:var(--mut);font-weight:600;font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.05em}
+.tw td code,.tw th code{white-space:pre-wrap;word-break:break-word;display:inline-block;
+  max-width:100%}
+.t-rules th:nth-child(1),.t-rules td:nth-child(1){width:22%}
+.t-rules th:nth-child(2),.t-rules td:nth-child(2){width:28%}
+.t-rules th:nth-child(3),.t-rules td:nth-child(3){width:50%}
+.t-names th:nth-child(1),.t-names td:nth-child(1){width:26%}
+.t-grid th:nth-child(1),.t-grid td:nth-child(1){width:34%}
+.t-res th:nth-child(1),.t-res td:nth-child(1){width:18%}
+.tw td.a-right,.tw th.a-right{text-align:right}
+.tw td.a-center,.tw th.a-center{text-align:center}
+@media (max-width:640px){
+  .t-rules table,.t-rules thead,.t-rules tbody,.t-rules tr,.t-rules th,.t-rules td{
+    display:block;width:auto}
+  .t-rules thead{display:none}
+  .t-rules th:nth-child(1),.t-rules td:nth-child(1),
+  .t-rules th:nth-child(2),.t-rules td:nth-child(2),
+  .t-rules th:nth-child(3),.t-rules td:nth-child(3){width:auto}
+  .t-rules tr{border-bottom:1px solid var(--line);padding:.75rem 0}
+  .t-rules td{border:0;padding:.18rem 0}
+  .t-rules td::before{content:attr(data-label);display:block;font:500 .64rem/1.3 var(--sans);
+    text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:.12rem}
+  .t-rules td:empty{display:none}
+}
+
+img{max-width:100%;height:auto;display:block;margin:1.5rem auto}
+
+/* a 2.05rem serif headline runs five lines on a phone; tighten it there */
+@media (max-width:640px){
+  body{font-size:17.5px}
+  h1{font-size:1.62rem;line-height:1.22}
+  h2{font-size:1.24rem;margin-top:2.4rem}
+  .tv{font-size:1.35rem}
+}
+
+/* ---- post list ---- */
+.postlist{list-style:none;padding:0;margin:1.6rem 0 0}
+.postlist li{border-top:1px solid var(--line);padding:1.25rem 0}
+.postlist a{text-decoration:none;font:600 1.12rem/1.35 var(--serif);color:var(--ink)}
+.postlist a:hover{color:var(--accent)}
+.postlist .d{color:var(--mut);font:400 .78rem/1.5 var(--sans);margin-top:.35rem}
+.ptag{display:inline-block;font:600 .62rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.3rem .5rem;border-radius:3px;border:1px solid var(--line);
+  color:var(--mut);background:var(--card);margin-bottom:.5rem}
+.pt-death-report{color:var(--v-reject-fg);background:var(--v-reject-bg);
+  border-color:var(--v-reject-bd)}
+
+/* ---- footer ---- */
+footer.site{border-top:1px solid var(--line);margin-top:4rem;padding:1.4rem 0 3.5rem;
+  color:var(--mut);font:400 .78rem/1.6 var(--sans)}
+footer.site a{color:var(--accent);text-decoration:none}
+footer.site a:hover{text-decoration:underline}
+footer.site .fr{margin:0 0 .4rem}
+footer.site code{font-size:.92em}
+</style>
+<script data-goatcounter="https://plutosio.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+/* Light by default. The toggle is the only thing that turns it dark, and the choice
+   is remembered per browser. Storage can throw in a private window, so it is guarded
+   and the page renders correctly either way. */
+(function(){try{var t=localStorage.getItem("theme");
+if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();
+</script>
+<header class="site"><div class="wrap">
+  <div class="row">
+    <div>
+      <a class="brand" href="../index.html">The Tested Desk</a>
+      <div class="tag">Would this strategy have passed a prop-firm evaluation? I run the numbers.</div>
+    </div>
+    <button class="theme" type="button" onclick="toggleTheme()" id="themebtn">Dark</button>
+  </div>
+  <nav>
+    <a href="../index.html">Posts</a><a href="../about/index.html">About</a
+    ><a href="../methodology/index.html">Methodology</a
+    ><a href="../disclosure/index.html">Disclosure</a>
+  </nav>
+  <hr class="rule">
+  <div class="counter">Eval verdicts: <b>1</b> scored &middot; <b>1</b> rejected &middot; <b>0</b> passed &middot; Death reports: <b>1</b></div>
+</div></header>
+<main class="wrap">
+<h1>Disclosure</h1>
+<p><strong>Affiliate relationship.</strong> This site earns a commission if you buy an evaluation through this link. The firm is <strong>Strix Options LLC</strong> (strixoptionsfunding.com). The link is <code>https://tradersgauntlet.com/go/strix</code>, which redirects to Strix Options LLC's site with a referral tag. The discount code shown alongside it is Strix Options LLC's own public promotion. The link is the attribution, not the code.</p>
+<p><strong>What that does and does not buy.</strong> It does not buy Strix Options LLC a favourable write-up. The first post on this site concludes that the strategy it examines fails at the conservative fill assumption, and prints Strix Options LLC's own risk disclaimer verbatim in the process. If a rule set is bad for a strategy, the post says so.</p>
+<p><strong>Relationship disclosed:</strong> affiliate only. This site is not operated by, endorsed by, or affiliated with Strix Options LLC beyond that referral arrangement.</p>
+<p><strong>Simulated results.</strong> Everything here is backtested and simulated. No post reports a funded-account result, and no post forecasts earnings. Nothing on this site is investment advice or a recommendation to trade any security or derivative.</p>
+<p><strong>Strix Options LLC's own words on simulation, which are worth more than mine:</strong></p>
+<blockquote><p>"Simulated fills never face real liquidity, real slippage, or the pressure of real money at stake, and any program built after the fact tends to flatter its own design."</p></blockquote>
+<hr>
+<p><em>Last updated 2026-09-20.</em></p>
+</main>
+<footer class="site"><div class="wrap">
+  <p class="fr"><a href="../methodology/index.html">Methodology</a> &middot;
+     <a href="../disclosure/index.html">Disclosure</a></p>
+  <p class="fr">This site earns a commission if you buy an evaluation through this link. <a href="https://tradersgauntlet.com/go/strix" rel="sponsored nofollow noopener">Strix Options</a> &middot; code <code>SEPTEMBER</code></p>
+  
+</div></footer>
+<script>
+function toggleTheme(){var d=document.documentElement;
+var dark=d.getAttribute("data-theme")==="dark";
+d.setAttribute("data-theme",dark?"light":"dark");
+try{localStorage.setItem("theme",dark?"light":"dark");}catch(e){}
+var b=document.getElementById("themebtn");if(b)b.textContent=dark?"Dark":"Light";}
+(function(){var b=document.getElementById("themebtn");
+if(b&&document.documentElement.getAttribute("data-theme")==="dark")b.textContent="Light";})();
+</script>
+</html>

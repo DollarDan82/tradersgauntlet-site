@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The doji tells you nothing: a death report — The Tested Desk</title>
+<meta name="description" content="Negative result. Holdout sealed, never opened. A documented failure, published because the failure is the finding.">
+<meta property="og:title" content="The doji tells you nothing: a death report">
+<meta property="og:description" content="Negative result. Holdout sealed, never opened. A documented failure, published because the failure is the finding.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://tradersgauntlet.com/posts/doji-death-report/">
+
+<link rel="canonical" href="https://tradersgauntlet.com/posts/doji-death-report/">
+<link rel="alternate" type="application/rss+xml" title="The Tested Desk" href="../../feed.xml">
+<style>
+/* Light is the default. Dark is an explicit choice, not a system guess. */
+:root{
+  --paper:#fbfaf7; --ink:#1b1b19; --mut:#6d6d65; --line:#e5e2da; --card:#f3f1ea;
+  --accent:#1a5490;
+  --v-pass-fg:#14603c; --v-pass-bg:#e4f1e9; --v-pass-bd:#bfdccb;
+  --v-reject-fg:#9c2f24; --v-reject-bg:#fbe9e6; --v-reject-bd:#eec7c0;
+  --v-inc-fg:#8a5c0e; --v-inc-bg:#fbf1dc; --v-inc-bd:#ecd9ab;
+  /* the equity line is ink, not the accent: the accent stays reserved for links and
+     the verdict. The floor and target borrow the verdict's own reject/pass hues,
+     because the floor is what rejects you and the target is what passes you. */
+  --c-eq:var(--ink); --c-floor:#9c2f24; --c-target:#14603c; --c-ax:#cfcbc1;
+  --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+[data-theme="dark"]{
+  --paper:#16161a; --ink:#e7e5e0; --mut:#9a978f; --line:#2d2d33; --card:#1e1e23;
+  --accent:#78b0e0;
+  --v-pass-fg:#7fd0a5; --v-pass-bg:#16301f; --v-pass-bd:#2a5a3c;
+  --v-reject-fg:#f0968a; --v-reject-bg:#331a17; --v-reject-bd:#5e2f28;
+  --v-inc-fg:#e8bf72; --v-inc-bg:#2e2412; --v-inc-bd:#5c4720;
+  --c-floor:#f0968a; --c-target:#7fd0a5; --c-ax:#3a3a42;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);margin:0;
+  font:18.5px/1.6 var(--serif);font-synthesis-weight:none}
+.wrap{max-width:68ch;margin:0 auto;padding:0 20px}
+
+/* ---- header ---- */
+header.site{padding:1.5rem 0 0}
+header.site .row{display:flex;align-items:baseline;justify-content:space-between;gap:1rem}
+header.site a.brand{color:var(--ink);text-decoration:none;font:600 1.12rem/1.2 var(--sans);
+  letter-spacing:-.015em}
+header.site .tag{color:var(--mut);font:400 .84rem/1.45 var(--sans);margin-top:.25rem}
+nav{margin-top:.9rem;font:500 .8rem/1 var(--sans);letter-spacing:.01em}
+nav a{color:var(--mut);text-decoration:none;margin-right:1.15rem}
+nav a:hover{color:var(--accent)}
+.rule{border:0;border-top:1px solid var(--line);margin:.85rem 0 0}
+.counter{font:500 .74rem/1 var(--sans);color:var(--mut);letter-spacing:.06em;
+  text-transform:uppercase;padding:.6rem 0 0}
+.counter b{color:var(--ink);font-weight:600}
+button.theme{background:none;border:1px solid var(--line);color:var(--mut);
+  border-radius:999px;padding:.3rem .7rem;font:500 .72rem/1 var(--sans);cursor:pointer;
+  letter-spacing:.04em;white-space:nowrap}
+button.theme:hover{color:var(--ink);border-color:var(--mut)}
+
+/* ---- type ---- */
+main{padding-top:2.2rem}
+h1{font:600 2.05rem/1.2 var(--serif);letter-spacing:-.02em;margin:0 0 .75rem}
+h2{font:600 1.36rem/1.3 var(--serif);letter-spacing:-.01em;margin:3rem 0 .75rem}
+h3{font:600 .76rem/1.3 var(--sans);text-transform:uppercase;letter-spacing:.085em;
+  color:var(--mut);margin:2.1rem 0 .6rem}
+p{margin:0 0 1.1rem}
+a{color:var(--accent);text-underline-offset:2px}
+ul{padding-left:1.15rem}
+li{margin:.4rem 0}
+code{background:var(--card);padding:.09em .34em;border-radius:3px;font:.84em var(--mono)}
+
+/* ---- verdict pill: the headline fact ---- */
+.verdict{display:inline-block;font:600 .74rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.42rem .68rem;border-radius:999px;border:1px solid}
+.v-reject{color:var(--v-reject-fg);background:var(--v-reject-bg);border-color:var(--v-reject-bd)}
+.v-pass{color:var(--v-pass-fg);background:var(--v-pass-bg);border-color:var(--v-pass-bd)}
+.v-inconclusive{color:var(--v-inc-fg);background:var(--v-inc-bg);border-color:var(--v-inc-bd)}
+
+/* ---- title block ---- */
+.titleblock{margin-bottom:.2rem}
+.titleblock h1{margin-top:.85rem}
+
+/* ---- metadata ---- */
+.meta{font:400 .8rem/1.5 var(--sans);color:var(--mut);margin:.85rem 0 0}
+.meta a{color:var(--mut);text-decoration:none;border-bottom:1px dotted var(--line);
+  font-family:var(--mono);font-size:.94em}
+.meta a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.meta .sep{opacity:.5;padding:0 .45rem}
+
+/* ---- disclosure callout ---- */
+.callout{border:1px solid var(--line);border-left:3px solid var(--mut);
+  background:var(--card);border-radius:4px;padding:1rem 1.15rem .35rem;margin:1.6rem 0}
+.callout-tag{font:600 .66rem/1 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--mut);margin-bottom:.55rem}
+.callout p{font-size:.94rem;line-height:1.55;margin:0 0 .65rem}
+
+/* ---- key-number tiles ---- */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:1.6rem 0 2.2rem}
+.tile{background:var(--paper);padding:.95rem 1rem}
+.tl{font:500 .66rem/1.3 var(--sans);letter-spacing:.07em;text-transform:uppercase;
+  color:var(--mut)}
+.tv{font:600 1.5rem/1.2 var(--sans);letter-spacing:-.02em;margin:.4rem 0 .25rem}
+.ts{font:400 .74rem/1.4 var(--sans);color:var(--mut)}
+@media (max-width:640px){.tiles{grid-template-columns:1fr}}
+
+/* ---- inline chart ---- */
+figure.chart{margin:1.6rem 0 2rem}
+figure.chart svg{width:100%;height:auto;display:block}
+figure.chart figcaption{font:400 .76rem/1.45 var(--sans);color:var(--mut);margin-top:.5rem}
+.chart .ax{stroke:var(--c-ax);stroke-width:1}
+.chart .axl{fill:var(--mut);font:11px var(--sans)}
+.chart .lbl{font:11px var(--sans)}
+.chart .equity{fill:none;stroke:var(--c-eq);stroke-width:2}
+.chart .floor{fill:none;stroke:var(--c-floor);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .target{fill:none;stroke:var(--c-target);stroke-width:1.5;stroke-dasharray:2 4}
+.chart .target-l{fill:var(--c-target)}
+.chart .floor-l{fill:var(--c-floor)}
+.chart .mark{fill:var(--c-floor);stroke:var(--paper);stroke-width:2}
+.chart .mark-l{fill:var(--c-floor);font-weight:600}
+
+/* ---- quotes ---- */
+blockquote{border-left:2px solid var(--line);margin:1.5rem 0;padding:.1rem 0 .1rem 1.1rem;
+  color:var(--mut);font-size:.96rem}
+blockquote h3{margin-top:.3rem}
+
+/* ---- tables: the container owns the overflow, not the table ---- */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:1.3rem 0}
+.tw table{border-collapse:collapse;table-layout:fixed;width:100%;margin:0;
+  font:.8rem/1.45 var(--sans)}
+.tw th,.tw td{border-bottom:1px solid var(--line);padding:.46rem .6rem;text-align:left;
+  white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.tw th{color:var(--mut);font-weight:600;font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.05em}
+.tw td code,.tw th code{white-space:pre-wrap;word-break:break-word;display:inline-block;
+  max-width:100%}
+.t-rules th:nth-child(1),.t-rules td:nth-child(1){width:22%}
+.t-rules th:nth-child(2),.t-rules td:nth-child(2){width:28%}
+.t-rules th:nth-child(3),.t-rules td:nth-child(3){width:50%}
+.t-names th:nth-child(1),.t-names td:nth-child(1){width:26%}
+.t-grid th:nth-child(1),.t-grid td:nth-child(1){width:34%}
+.t-res th:nth-child(1),.t-res td:nth-child(1){width:18%}
+.tw td.a-right,.tw th.a-right{text-align:right}
+.tw td.a-center,.tw th.a-center{text-align:center}
+@media (max-width:640px){
+  .t-rules table,.t-rules thead,.t-rules tbody,.t-rules tr,.t-rules th,.t-rules td{
+    display:block;width:auto}
+  .t-rules thead{display:none}
+  .t-rules th:nth-child(1),.t-rules td:nth-child(1),
+  .t-rules th:nth-child(2),.t-rules td:nth-child(2),
+  .t-rules th:nth-child(3),.t-rules td:nth-child(3){width:auto}
+  .t-rules tr{border-bottom:1px solid var(--line);padding:.75rem 0}
+  .t-rules td{border:0;padding:.18rem 0}
+  .t-rules td::before{content:attr(data-label);display:block;font:500 .64rem/1.3 var(--sans);
+    text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:.12rem}
+  .t-rules td:empty{display:none}
+}
+
+img{max-width:100%;height:auto;display:block;margin:1.5rem auto}
+
+/* a 2.05rem serif headline runs five lines on a phone; tighten it there */
+@media (max-width:640px){
+  body{font-size:17.5px}
+  h1{font-size:1.62rem;line-height:1.22}
+  h2{font-size:1.24rem;margin-top:2.4rem}
+  .tv{font-size:1.35rem}
+}
+
+/* ---- post list ---- */
+.postlist{list-style:none;padding:0;margin:1.6rem 0 0}
+.postlist li{border-top:1px solid var(--line);padding:1.25rem 0}
+.postlist a{text-decoration:none;font:600 1.12rem/1.35 var(--serif);color:var(--ink)}
+.postlist a:hover{color:var(--accent)}
+.postlist .d{color:var(--mut);font:400 .78rem/1.5 var(--sans);margin-top:.35rem}
+.ptag{display:inline-block;font:600 .62rem/1 var(--sans);letter-spacing:.09em;
+  text-transform:uppercase;padding:.3rem .5rem;border-radius:3px;border:1px solid var(--line);
+  color:var(--mut);background:var(--card);margin-bottom:.5rem}
+.pt-death-report{color:var(--v-reject-fg);background:var(--v-reject-bg);
+  border-color:var(--v-reject-bd)}
+
+/* ---- footer ---- */
+footer.site{border-top:1px solid var(--line);margin-top:4rem;padding:1.4rem 0 3.5rem;
+  color:var(--mut);font:400 .78rem/1.6 var(--sans)}
+footer.site a{color:var(--accent);text-decoration:none}
+footer.site a:hover{text-decoration:underline}
+footer.site .fr{margin:0 0 .4rem}
+footer.site code{font-size:.92em}
+</style>
+<script data-goatcounter="https://plutosio.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
+/* Light by default. The toggle is the only thing that turns it dark, and the choice
+   is remembered per browser. Storage can throw in a private window, so it is guarded
+   and the page renders correctly either way. */
+(function(){try{var t=localStorage.getItem("theme");
+if(t==="dark")document.documentElement.setAttribute("data-theme","dark");}catch(e){}})();
+</script>
+<header class="site"><div class="wrap">
+  <div class="row">
+    <div>
+      <a class="brand" href="../../index.html">The Tested Desk</a>
+      <div class="tag">Would this strategy have passed a prop-firm evaluation? I run the numbers.</div>
+    </div>
+    <button class="theme" type="button" onclick="toggleTheme()" id="themebtn">Dark</button>
+  </div>
+  <nav>
+    <a href="../../index.html">Posts</a><a href="../../about/index.html">About</a
+    ><a href="../../methodology/index.html">Methodology</a
+    ><a href="../../disclosure/index.html">Disclosure</a>
+  </nav>
+  <hr class="rule">
+  <div class="counter">Eval verdicts: <b>1</b> scored &middot; <b>1</b> rejected &middot; <b>0</b> passed &middot; Death reports: <b>1</b></div>
+</div></header>
+<main class="wrap">
+<div class="titleblock"><span class="verdict v-reject" title="desk verdict REJECT - no eval was run against a prop firm&#x27;s rules" aria-label="desk verdict REJECT - no eval was run against a prop firm&#x27;s rules">REJECT</span>
+<h1>The doji tells you nothing: a death report</h1>
+<div class="meta">2026-09-19<span class="sep">&middot;</span><a href="../../methodology/index.html#run-id" title="What a source row is">PS-DOJI</a><span class="sep">&middot;</span>holdout sealed, never opened</div></div><div class="callout"><div class="callout-tag">Backtested &middot; negative result</div><p><strong>Simulated, backtested, and not a funded-account result.</strong> No account was traded. <strong>This is a negative result</strong> — a documented failure, published because the failure is the finding. There is no strategy here to adopt and no P&amp;L series to show, because this line died before it ever had one.</p></div>
+<h2>The question</h2>
+<p>A doji is a candle that opens and closes at nearly the same price. The folklore says it marks indecision, and that indecision resolves into something you can trade. The question put to it was narrow and answerable: <strong>does a doji carry information about the next move — its direction, its magnitude, or its dispersion?</strong></p>
+<p>Not "is the doji real". Whether the thing it is supposed to tell you is large enough to be worth acting on after costs.</p>
+<h2>What was tested</h2>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left"></th>
+<th class="a-left"></th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="">Bars</td>
+<td class="a-left" data-label="">5-minute, resampled from 1-minute</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Universe</td>
+<td class="a-left" data-label="">SPY, QQQ, IWM, AAPL, AMZN, META, MSFT, NVDA, TSLA</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Discovery window</td>
+<td class="a-left" data-label="">2003-09-10 → 2018-12-12</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Sample</td>
+<td class="a-left" data-label="">11,881,916 bars across 3,842 day-blocks</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Holdout</td>
+<td class="a-left" data-label="">sealed 2018-12-13, <strong>never opened</strong></td>
+</tr>
+</tbody></table></div>
+<p>The holdout matters more than it looks. It was sealed before the discovery work began and it is still sealed, because nothing in discovery earned the right to spend it. A shortlist of candidates would have opened it. The shortlist came back empty, so the holdout is untouched and remains available to a future question that deserves it.</p>
+<p>The doji definition was banded rather than fixed, so the result could not hinge on one arbitrary threshold: body-to-range ratios of <strong>0.02, 0.05 and 0.10</strong>, with wick balance bands at <strong>0.70 and 0.30</strong>. Those are specification, not discovery — any reader can reimplement them exactly.</p>
+<h2>The decision rule, registered before the run</h2>
+<ul><li><strong>20 pre-registered contrasts.</strong> Fixed in advance, with their directions pinned. No contrast was added after seeing a number.</li><li><strong>Benjamini-Yekutieli at q = 0.10.</strong> BY rather than BH, because the contrasts are not independent and BY does not assume they are.</li><li><strong>A 10 bp cost floor, applied to results as a shortlist gate.</strong> This is the part worth stealing: under Amendment 11 the floor was not a filter on what to test but a gate on what could be promoted. A contrast could be statistically real and still ineligible, because an effect smaller than its own transaction cost is not a finding you can act on.</li></ul>
+<h2>Results: zero separations</h2>
+<p>Four of the twenty cleared BY at q = 0.10. <strong>All four landed below the cost floor</strong>, so under the registered rule none was eligible for the shortlist, and the shortlist closed empty.</p>
+<div class="tw t-names">
+<table>
+<thead><tr>
+<th class="a-left">contrast</th>
+<th class="a-right">effect</th>
+<th class="a-right">× cost floor</th>
+<th class="a-left">95% CI</th>
+<th class="a-right">p</th>
+<th class="a-left">state</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="contrast">dispersion vs controls</td>
+<td class="a-right" data-label="effect">+2.9%</td>
+<td class="a-right" data-label="× cost floor">0.29×</td>
+<td class="a-left" data-label="95% CI">[+2.5%, +3.2%]</td>
+<td class="a-right" data-label="p">0.0001</td>
+<td class="a-left" data-label="state">sub-threshold</td>
+</tr>
+<tr>
+<td class="a-left" data-label="contrast">|forward move| vs controls</td>
+<td class="a-right" data-label="effect">+2.2%</td>
+<td class="a-right" data-label="× cost floor">0.22×</td>
+<td class="a-left" data-label="95% CI">[+1.1%, +3.3%]</td>
+<td class="a-right" data-label="p">0.0001</td>
+<td class="a-left" data-label="state">sub-threshold</td>
+</tr>
+<tr>
+<td class="a-left" data-label="contrast">opex week vs not</td>
+<td class="a-right" data-label="effect">−1.55 bps</td>
+<td class="a-right" data-label="× cost floor">0.16×</td>
+<td class="a-left" data-label="95% CI">[−2.62, −0.48]</td>
+<td class="a-right" data-label="p">0.0040</td>
+<td class="a-left" data-label="state"><strong>withdrawn — artifact</strong></td>
+</tr>
+<tr>
+<td class="a-left" data-label="contrast">above vs below session VWAP</td>
+<td class="a-right" data-label="effect">+1.39 bps</td>
+<td class="a-right" data-label="× cost floor">0.14×</td>
+<td class="a-left" data-label="95% CI">[+0.93, +1.86]</td>
+<td class="a-right" data-label="p">0.0001</td>
+<td class="a-left" data-label="state"><strong>withdrawn — artifact</strong></td>
+</tr>
+</tbody></table></div>
+<p>The other sixteen showed no separation at all.</p>
+<h3>The two withdrawals</h3>
+<p>Two of those four were withdrawn after they had already cleared BY. Not because the numbers were wrong — because a noise control reproduced them.</p>
+<p>The VWAP contrast reported that dojis above the session VWAP outperform dojis below it: +1.39 bps at p = 0.0001. Then the same contrast was run on populations that were not dojis at all:</p>
+<div class="tw t-names">
+<table>
+<thead><tr>
+<th class="a-left">population</th>
+<th class="a-right">effect (bps)</th>
+<th class="a-left">95% CI</th>
+<th class="a-right">p</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="population"><strong>real dojis</strong></td>
+<td class="a-right" data-label="effect (bps)"><strong>+1.394</strong></td>
+<td class="a-left" data-label="95% CI">[+0.93, +1.86]</td>
+<td class="a-right" data-label="p">0.0001</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 5</td>
+<td class="a-right" data-label="effect (bps)">+1.259</td>
+<td class="a-left" data-label="95% CI">[+0.76, +1.74]</td>
+<td class="a-right" data-label="p">0.0001</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 1</td>
+<td class="a-right" data-label="effect (bps)">+1.244</td>
+<td class="a-left" data-label="95% CI">[+0.76, +1.72]</td>
+<td class="a-right" data-label="p">0.0001</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 3</td>
+<td class="a-right" data-label="effect (bps)">+1.121</td>
+<td class="a-left" data-label="95% CI">[+0.64, +1.60]</td>
+<td class="a-right" data-label="p">0.0001</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 4</td>
+<td class="a-right" data-label="effect (bps)">+1.083</td>
+<td class="a-left" data-label="95% CI">[+0.60, +1.57]</td>
+<td class="a-right" data-label="p">0.0001</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 6</td>
+<td class="a-right" data-label="effect (bps)">+0.760</td>
+<td class="a-left" data-label="95% CI">[+0.35, +1.18]</td>
+<td class="a-right" data-label="p">0.0004</td>
+</tr>
+<tr>
+<td class="a-left" data-label="population">noise control 2</td>
+<td class="a-right" data-label="effect (bps)">+0.655</td>
+<td class="a-left" data-label="95% CI">[+0.17, +1.13]</td>
+<td class="a-right" data-label="p">0.0110</td>
+</tr>
+</tbody></table></div>
+<p>All six reproduced it. Four at the same p = 0.0001, at 78–90% of the real magnitude, with intervals that overlap the real one almost entirely. The contrast measured nothing about dojis. What it measured is that <strong>bars above session VWAP have higher forward returns than bars below it, for any base-rate-matched selection of bars</strong> — intraday drift, and a property of the conditioning variable. The opex-week contrast fell the same way, at −1.55 bps real against controls at −1.18 and −1.16, all six sharing direction.</p>
+<h3>The two that survived are not survivors</h3>
+<p>The dispersion result, +2.9%, is <strong>implementation-unstable</strong>. Four defensible implementations of the same pre-registered contrast returned a range from <strong>−15.9% to +21.1%</strong>. A finding that changes sign depending on which reasonable estimator you pick is not a finding; it is a description of the estimator.</p>
+<p>The absolute-move result, +2.2%, is <strong>era-unstable</strong>: +1.6% in the early era against +4.7% in the late one. One regime wearing two faces.</p>
+<p>Three implementation errors were caught by cross-implementation checks during the block and corrected before anything was reported. Two of them moved results enough to change conclusions. That is the argument for computing a contrast more than one way even when the first way looks fine.</p>
+<h2>The two findings worth your time</h2>
+<h3>1. The confirmation condition is not a condition</h3>
+<p>A common rule says: take the doji, but only if the next <em>k</em> bars confirm it. Tested at k = 3 on 5-minute bars, <strong>151,957 of 157,033 dojis are "confirmed" — 96.8%</strong>.</p>
+<p>The filter excludes about three percent of the population. It is not selecting a better subset; it is passing almost everything and charging you three bars of delay for the privilege. Any rule of the form <em>pattern plus confirmation</em> should be asked, first, what fraction it actually rejects. If the answer is a few percent, the confirmation is decoration.</p>
+<h3>2. A noise control must replicate the contrast structure, not just the pattern</h3>
+<p>This is the expensive lesson, and it cost two results that had already survived multiple-comparison correction.</p>
+<p>The original noise controls were built correctly as far as they went: take a non-doji population matched on the same base rates, and check that the pattern effect disappears. It did. Every control returned null. Their nullity was reassuring and, it turned out, meaningless.</p>
+<p>The controls varied the <strong>pattern</strong>. The contrast was conditioned on a <strong>variable</strong> — position relative to VWAP. A control that varies only the pattern tests whether the pattern matters and is <strong>silent on whether the conditioning does</strong>. The fix is a rule that is easy to state and easy to forget:</p>
+<blockquote><p>For any contrast conditioned on a variable V, the noise control is <em>that same contrast on V</em>, applied to a non-pattern population.</p></blockquote>
+<p>Splitting the controls by the same conditioning variable is what exposed both artifacts. Neither would have been caught by a control that only asked whether dojis were special.</p>
+<h2>What this does and does not say</h2>
+<p><strong>It does say</strong> that across twenty pre-registered contrasts on nine liquid names over fifteen years of 5-minute bars, no doji contrast produced a separation large enough to cover a 10 bp cost floor — and that the two largest apparent effects were properties of the conditioning variables rather than of the pattern.</p>
+<p><strong>It does not say</strong> that dojis are meaningless everywhere. Specifically:</p>
+<ul><li><strong>This is discovery only.</strong> The holdout was never opened, so nothing here has been tested out of sample. These numbers are the weaker kind of evidence, and calling them confirmatory would be the error the seal exists to prevent.</li><li><strong>One regime.</strong> One window, one bar size, nine large, liquid names. A different universe or a different timeframe is a different question.</li><li><strong>The magnitude questions were the only ones with anything in them at all</strong>, and what they had was tiny — a fifth to a third of the cost floor, before the stability problems. Direction questions were flat throughout.</li><li><strong>Absence of evidence at this size.</strong> The study was powered to find effects that clear costs. It was not powered to prove that nothing smaller exists, and something smaller than a tenth of a basis point would be invisible here and useless anyway.</li></ul>
+<h3>Desk verdict card</h3>
+<blockquote><p><strong>○ REJECT</strong> — <em>Failed the pre-registered gate. Recorded, not deleted — a rejected run is evidence.</em></p>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left"></th>
+<th class="a-left"></th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="">Run</td>
+<td class="a-left" data-label=""><code>PS-DOJI</code></td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Logged</td>
+<td class="a-left" data-label="">2026-08-08</td>
+</tr>
+<tr>
+<td class="a-left" data-label="">Data window</td>
+<td class="a-left" data-label="">2003-09-10 → 2018-12-12</td>
+</tr>
+</tbody></table></div>
+<p><strong>Headline metrics</strong></p>
+<div class="tw">
+<table>
+<thead><tr>
+<th class="a-left">metric</th>
+<th class="a-right">value</th>
+</tr></thead><tbody>
+<tr>
+<td class="a-left" data-label="metric">pre-registered contrasts</td>
+<td class="a-right" data-label="value">20</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">separations found</td>
+<td class="a-right" data-label="value"><strong>0</strong></td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">cleared BY at q = 0.10</td>
+<td class="a-right" data-label="value">4</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">best of those, vs cost floor</td>
+<td class="a-right" data-label="value">0.29×</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">withdrawn as artifacts</td>
+<td class="a-right" data-label="value">2</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">bars / day-blocks</td>
+<td class="a-right" data-label="value">11,881,916 / 3,842</td>
+</tr>
+<tr>
+<td class="a-left" data-label="metric">shortlist</td>
+<td class="a-right" data-label="value">empty</td>
+</tr>
+</tbody></table></div>
+<p><strong>Flags</strong></p>
+<ul><li><strong>HOLDOUT SEALED</strong> — never opened — nothing in discovery earned the right to spend it</li><li><strong>DISCOVERY ONLY</strong> — no out-of-sample confirmation; the weaker kind of evidence</li><li><strong>PROVISIONAL</strong> — verdict vocabulary not yet ratified</li></ul></blockquote>
+<hr>
+<p><em>Want to see what happens when a strategy <strong>does</strong> have a P&amp;L series? → <a href="../condor-eq-strix/">Read post 1</a>.</em></p>
+</main>
+<footer class="site"><div class="wrap">
+  <p class="fr"><a href="../../methodology/index.html">Methodology</a> &middot;
+     <a href="../../disclosure/index.html">Disclosure</a></p>
+  <p class="fr">This site earns a commission if you buy an evaluation through this link. <a href="https://tradersgauntlet.com/go/strix" rel="sponsored nofollow noopener">Strix Options</a></p>
+  <p class="fr">Run <code>PS-DOJI</code></p>
+</div></footer>
+<script>
+function toggleTheme(){var d=document.documentElement;
+var dark=d.getAttribute("data-theme")==="dark";
+d.setAttribute("data-theme",dark?"light":"dark");
+try{localStorage.setItem("theme",dark?"light":"dark");}catch(e){}
+var b=document.getElementById("themebtn");if(b)b.textContent=dark?"Dark":"Light";}
+(function(){var b=document.getElementById("themebtn");
+if(b&&document.documentElement.getAttribute("data-theme")==="dark")b.textContent="Light";})();
+</script>
+</html>
